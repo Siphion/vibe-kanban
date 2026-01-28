@@ -38,10 +38,12 @@ import { ClickedElementsProvider } from './contexts/ClickedElementsProvider';
 // Design scope components
 import { LegacyDesignScope } from '@/components/legacy-design/LegacyDesignScope';
 import { NewDesignScope } from '@/components/ui-new/scope/NewDesignScope';
+import { VSCodeScope } from '@/components/ui-new/scope/VSCodeScope';
 import { TerminalProvider } from '@/contexts/TerminalContext';
 
 // New design pages
 import { Workspaces } from '@/pages/ui-new/Workspaces';
+import { VSCodeWorkspacePage } from '@/pages/ui-new/VSCodeWorkspacePage';
 import { WorkspacesLanding } from '@/pages/ui-new/WorkspacesLanding';
 import { ElectricTestPage } from '@/pages/ui-new/ElectricTestPage';
 
@@ -182,6 +184,18 @@ function AppContent() {
             </Route>
 
             {/* ========== NEW DESIGN ROUTES ========== */}
+            {/* VS Code workspace route (standalone, no layout, no keyboard shortcuts) */}
+            <Route
+              path="/workspaces/:workspaceId/vscode"
+              element={
+                <VSCodeScope>
+                  <TerminalProvider>
+                    <VSCodeWorkspacePage />
+                  </TerminalProvider>
+                </VSCodeScope>
+              }
+            />
+
             <Route
               path="/workspaces"
               element={
