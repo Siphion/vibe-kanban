@@ -164,7 +164,7 @@ pub async fn open_repo_in_editor(
         config.editor.with_override(editor_type_str)
     };
 
-    match editor_config.open_file(&repo.path).await {
+    match editor_config.open_file(&repo.path, None).await {
         Ok(url) => {
             tracing::info!(
                 "Opened editor for repo {} at path: {}{}",

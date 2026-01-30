@@ -161,14 +161,39 @@ impl EditorConfig {
         let _ = cmd.no_window().spawn();
     }
 
-    pub async fn open_file(&self, path: &Path) -> Result<Option<String>, EditorOpenError> {
-        if let Some(url) = self.remote_url(path) {
+    pub async fn open_file(
+        &self,
+        folder: &Path,
+        file: Option<&Path>,
+    ) -> Result<Option<String>, EditorOpenError> {
+        // Custom editor with HTTP(S) URL template: return URL directly
+        if matches!(self.editor_type, EditorType::Custom) {
+            if let Some(ref cmd) = self.custom_command {
+                if cmd.starts_with("http://") || cmd.starts_with("https://") {
+                    let file_str = file
+                        .map(|f| folder.join(f).to_string_lossy().into_owned())
+                        .unwrap_or_default();
+                    let url = cmd
+                        .replace("{path}", &folder.to_string_lossy())
+                        .replace("{file}", &file_str);
+                    return Ok(Some(url));
+                }
+            }
+        }
+
+        // For non-HTTP editors, combine folder + file into a single path
+        let combined = match file {
+            Some(f) => folder.join(f),
+            None => folder.to_path_buf(),
+        };
+
+        if let Some(url) = self.remote_url(&combined) {
             return Ok(Some(url));
         }
         if self.should_auto_install_extension() {
             self.try_install_extension().await;
         }
-        self.spawn_local(path).await?;
+        self.spawn_local(&combined).await?;
         Ok(None)
     }
 

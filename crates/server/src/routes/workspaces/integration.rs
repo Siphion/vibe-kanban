@@ -94,8 +94,8 @@ pub async fn open_workspace_in_editor(
     State(deployment): State<DeploymentImpl>,
     Json(payload): Json<OpenEditorRequest>,
 ) -> Result<ResponseJson<ApiResponse<OpenEditorResponse>>, ApiError> {
-    let path = resolve_workspace_editor_path(&deployment, &workspace, payload.file_path.as_deref())
-        .await?;
+    let workspace_path = resolve_workspace_folder_path(&deployment, &workspace).await?;
+    let file_path = payload.file_path.as_deref().map(std::path::Path::new);
 
     let editor_config = {
         let config = deployment.config().read().await;
@@ -103,12 +103,21 @@ pub async fn open_workspace_in_editor(
         config.editor.with_override(editor_type_str)
     };
 
-    match editor_config.open_file(path.as_path()).await {
+    // For logging, compute the combined path
+    let display_path = match file_path {
+        Some(f) => workspace_path.join(f),
+        None => workspace_path.clone(),
+    };
+
+    match editor_config
+        .open_file(workspace_path.as_path(), file_path)
+        .await
+    {
         Ok(url) => {
             tracing::info!(
                 "Opened editor for workspace {} at path: {}{}",
                 workspace.id,
-                path.display(),
+                display_path.display(),
                 if url.is_some() { " (remote mode)" } else { "" }
             );
 
@@ -149,6 +158,28 @@ pub async fn get_workspace_editor_path(
     Ok(ResponseJson(ApiResponse::success(OpenEditorPathResponse {
         workspace_path: path.to_string_lossy().into_owned(),
     })))
+}
+
+/// Returns the workspace folder path (always joining the single repo name).
+/// Used by open_workspace_in_editor which needs folder and file separately for URL templates.
+async fn resolve_workspace_folder_path(
+    deployment: &DeploymentImpl,
+    workspace: &Workspace,
+) -> Result<PathBuf, ApiError> {
+    let container_ref = deployment
+        .container()
+        .ensure_container_exists(workspace)
+        .await?;
+    deployment.container().touch(workspace).await?;
+
+    let workspace_path = Path::new(&container_ref);
+    let workspace_repos =
+        WorkspaceRepo::find_repos_for_workspace(&deployment.db().pool, workspace.id).await?;
+    Ok(if workspace_repos.len() == 1 {
+        workspace_path.join(&workspace_repos[0].name)
+    } else {
+        workspace_path.to_path_buf()
+    })
 }
 
 async fn resolve_workspace_editor_path(
