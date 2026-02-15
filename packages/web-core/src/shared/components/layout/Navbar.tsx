@@ -30,6 +30,7 @@ import { OpenInIdeButton } from '@/components/ide/OpenInIdeButton';
 import { useProjectRepos } from '@/hooks';
 import { useDiscordOnlineCount } from '@/hooks/useDiscordOnlineCount';
 import { ActiveTasksPopover } from '@/components/ActiveTasksPopover';
+import { ClaudeUsagePopover } from '@/components/ClaudeUsagePopover';
 import { useTranslation } from 'react-i18next';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -177,6 +178,7 @@ export function Navbar() {
               </span>
             </a>
             <ActiveTasksPopover />
+            <ClaudeUsagePopover />
           </div>
 
           <div className="hidden sm:flex items-center gap-2">
