@@ -1,7 +1,13 @@
 import { useState, useCallback } from 'react';
 import { useProjects } from './useProjects';
-import type { Project, TaskWithAttemptStatus } from 'shared/types';
+import type { Project } from 'shared/types';
 import { handleApiResponse } from '@/lib/api';
+
+export interface TaskWithAttemptStatus {
+  id: string;
+  title: string;
+  status: string;
+}
 
 export interface ProjectActiveTasks {
   project: Project;

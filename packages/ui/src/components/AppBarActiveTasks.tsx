@@ -11,7 +11,7 @@ import {
   useAllProjectsActiveTasks,
   type ProjectActiveTasks,
 } from '@/hooks/useAllProjectsActiveTasks';
-import type { TaskWithAttemptStatus } from 'shared/types';
+import type { TaskWithAttemptStatus } from '@/hooks/useAllProjectsActiveTasks';
 
 function StatusSection({
   label,
