@@ -1,5 +1,5 @@
 import { Activity, Loader2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -28,7 +28,10 @@ function StatusSection({
 }: {
   label: string;
   color: string;
-  entries: { project: ProjectActiveTasks['project']; tasks: TaskWithAttemptStatus[] }[];
+  entries: {
+    project: ProjectActiveTasks['project'];
+    tasks: TaskWithAttemptStatus[];
+  }[];
 }) {
   if (entries.length === 0) return null;
 
@@ -50,7 +53,8 @@ function StatusSection({
           {entry.tasks.map((task) => (
             <DropdownMenuItem key={task.id} asChild>
               <Link
-                to={`/local-projects/${entry.project.id}/tasks?taskId=${task.id}`}
+                to="/projects/$projectId/issues/$issueId"
+                params={{ projectId: entry.project.id, issueId: task.id }}
                 className="pl-4 truncate"
                 title={task.title}
               >

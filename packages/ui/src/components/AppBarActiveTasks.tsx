@@ -1,11 +1,7 @@
 import { PulseIcon, SpinnerIcon } from '@phosphor-icons/react';
-import { Link } from 'react-router-dom';
+import { Link } from '@tanstack/react-router';
 import { cn } from '@/lib/utils';
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from '../primitives/Popover';
+import { Popover, PopoverTrigger, PopoverContent } from '../primitives/Popover';
 import { Tooltip } from '../primitives/Tooltip';
 import {
   useAllProjectsActiveTasks,
@@ -45,7 +41,8 @@ function StatusSection({
           {entry.tasks.map((task) => (
             <Link
               key={task.id}
-              to={`/local-projects/${entry.project.id}/tasks?taskId=${task.id}`}
+              to="/projects/$projectId/issues/$issueId"
+              params={{ projectId: entry.project.id, issueId: task.id }}
               className={cn(
                 'block pl-2 py-1 text-xs text-normal truncate rounded-sm',
                 'hover:bg-brand/10 transition-colors'
@@ -62,8 +59,7 @@ function StatusSection({
 }
 
 export function AppBarActiveTasks() {
-  const { data, isLoading, refresh, totalCount } =
-    useAllProjectsActiveTasks();
+  const { data, isLoading, refresh, totalCount } = useAllProjectsActiveTasks();
 
   const reviewEntries = data
     .filter((d) => d.inReview.length > 0)

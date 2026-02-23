@@ -1,13 +1,15 @@
 import { GaugeIcon, SpinnerIcon } from '@phosphor-icons/react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from '../primitives/Popover';
+import { Popover, PopoverTrigger, PopoverContent } from '../primitives/Popover';
 import { Tooltip } from '../primitives/Tooltip';
 import { useClaudeUsage, type ClaudeStatsCache } from '@/hooks/useClaudeUsage';
+import {
+  CLAUDE_PLANS,
+  getSelectedPlanId,
+  setSelectedPlanId,
+  getPlanById,
+} from '@/config/claude-plans';
 
 function formatNumber(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -46,13 +48,9 @@ function useDerivedStats(data: ClaudeStatsCache | null) {
 
     const weekMessages = weekActivity.reduce((s, d) => s + d.messageCount, 0);
     const weekSessions = weekActivity.reduce((s, d) => s + d.sessionCount, 0);
-    const weekToolCalls = weekActivity.reduce(
-      (s, d) => s + d.toolCallCount,
-      0
-    );
+    const weekToolCalls = weekActivity.reduce((s, d) => s + d.toolCallCount, 0);
     const weekOutputTokens = weekTokens.reduce(
-      (s, d) =>
-        s + Object.values(d.tokensByModel).reduce((a, b) => a + b, 0),
+      (s, d) => s + Object.values(d.tokensByModel).reduce((a, b) => a + b, 0),
       0
     );
 
@@ -91,11 +89,41 @@ function useDerivedStats(data: ClaudeStatsCache | null) {
   }, [data]);
 }
 
-function StatRow({ label, value }: { label: string; value: string | number }) {
+function ProgressBar({ pct }: { pct: number }) {
+  const clamped = Math.min(pct, 100);
+  const color =
+    clamped >= 90 ? 'bg-red-500' : clamped >= 70 ? 'bg-amber-500' : 'bg-brand';
   return (
-    <div className="flex items-center justify-between py-0.5 text-xs">
-      <span className="text-low">{label}</span>
-      <span className="font-medium tabular-nums text-normal">{value}</span>
+    <div className="h-1 w-full rounded-full bg-surface-secondary mt-0.5">
+      <div
+        className={cn('h-full rounded-full transition-all', color)}
+        style={{ width: `${clamped}%` }}
+      />
+    </div>
+  );
+}
+
+function StatRow({
+  label,
+  value,
+  pct,
+}: {
+  label: string;
+  value: string | number;
+  pct?: number;
+}) {
+  return (
+    <div className="py-0.5">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-low">{label}</span>
+        <span className="font-medium tabular-nums text-normal">
+          {value}
+          {pct != null && (
+            <span className="text-low ml-1">({Math.round(pct)}%)</span>
+          )}
+        </span>
+      </div>
+      {pct != null && <ProgressBar pct={pct} />}
     </div>
   );
 }
@@ -111,6 +139,21 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 export function AppBarClaudeUsage() {
   const { data, isLoading, refresh } = useClaudeUsage();
   const stats = useDerivedStats(data);
+  const [planId, setPlanId] = useState(getSelectedPlanId);
+  const plan = getPlanById(planId) ?? CLAUDE_PLANS[1];
+
+  const handlePlanChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value;
+    setPlanId(id);
+    setSelectedPlanId(id);
+  };
+
+  const pctToday = stats
+    ? (stats.today.messages / plan.messagesPerDay) * 100
+    : 0;
+  const pctWeek = stats
+    ? (stats.week.messages / (plan.messagesPerDay * 7)) * 100
+    : 0;
 
   return (
     <Popover onOpenChange={(open: boolean) => open && refresh()}>
@@ -131,8 +174,28 @@ export function AppBarClaudeUsage() {
         </PopoverTrigger>
       </Tooltip>
 
-      <PopoverContent side="right" sideOffset={8} className="w-64 p-3">
-        <p className="text-sm font-semibold text-high">Claude Code Usage</p>
+      <PopoverContent side="right" sideOffset={8} className="w-72 p-3">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-high">Claude Code Usage</p>
+        </div>
+
+        {/* Plan selector */}
+        <select
+          value={planId}
+          onChange={handlePlanChange}
+          className={cn(
+            'mt-1.5 w-full rounded-md px-2 py-1 text-xs',
+            'bg-surface-secondary text-normal border border-border',
+            'focus:outline-none focus:ring-1 focus:ring-brand',
+            'cursor-pointer'
+          )}
+        >
+          {CLAUDE_PLANS.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
 
         <div className="mt-2 h-px bg-border" />
 
@@ -149,7 +212,8 @@ export function AppBarClaudeUsage() {
             <SectionLabel>Today</SectionLabel>
             <StatRow
               label="Messages"
-              value={stats.today.messages.toLocaleString()}
+              value={`${stats.today.messages.toLocaleString()} / ${plan.messagesPerDay.toLocaleString()}`}
+              pct={pctToday}
             />
             <StatRow label="Sessions" value={stats.today.sessions} />
             <StatRow
@@ -166,7 +230,8 @@ export function AppBarClaudeUsage() {
             <SectionLabel>Last 7 days</SectionLabel>
             <StatRow
               label="Messages"
-              value={stats.week.messages.toLocaleString()}
+              value={`${stats.week.messages.toLocaleString()} / ${(plan.messagesPerDay * 7).toLocaleString()}`}
+              pct={pctWeek}
             />
             <StatRow label="Sessions" value={stats.week.sessions} />
             <StatRow
@@ -207,6 +272,16 @@ export function AppBarClaudeUsage() {
                 ))}
               </>
             )}
+
+            {/* Limits note */}
+            <div className="mt-2 pt-1.5 border-t border-border">
+              <p className="text-[10px] text-low leading-tight">
+                Limits are estimates (~{plan.messagesPer5h} msg/5h window, ~3
+                windows/day). Edit{' '}
+                <span className="font-mono">config/claude-plans.ts</span> to
+                update.
+              </p>
+            </div>
           </div>
         )}
       </PopoverContent>

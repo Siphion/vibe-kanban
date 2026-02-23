@@ -1,5 +1,5 @@
 import { Gauge, Loader2 } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,6 +15,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useClaudeUsage, type ClaudeStatsCache } from '@/hooks/useClaudeUsage';
+import {
+  CLAUDE_PLANS,
+  getSelectedPlanId,
+  setSelectedPlanId,
+  getPlanById,
+} from '@/config/claude-plans';
 
 function formatNumber(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -51,21 +57,11 @@ function useDerivedStats(data: ClaudeStatsCache | null) {
       (d) => d.date >= weekStart && d.date <= weekEnd
     );
 
-    const weekMessages = weekActivity.reduce(
-      (s, d) => s + d.messageCount,
-      0
-    );
-    const weekSessions = weekActivity.reduce(
-      (s, d) => s + d.sessionCount,
-      0
-    );
-    const weekToolCalls = weekActivity.reduce(
-      (s, d) => s + d.toolCallCount,
-      0
-    );
+    const weekMessages = weekActivity.reduce((s, d) => s + d.messageCount, 0);
+    const weekSessions = weekActivity.reduce((s, d) => s + d.sessionCount, 0);
+    const weekToolCalls = weekActivity.reduce((s, d) => s + d.toolCallCount, 0);
     const weekOutputTokens = weekTokens.reduce(
-      (s, d) =>
-        s + Object.values(d.tokensByModel).reduce((a, b) => a + b, 0),
+      (s, d) => s + Object.values(d.tokensByModel).reduce((a, b) => a + b, 0),
       0
     );
 
@@ -74,9 +70,7 @@ function useDerivedStats(data: ClaudeStatsCache | null) {
       : 0;
 
     const models = Object.entries(data.modelUsage).map(([name, usage]) => {
-      const shortName = name
-        .replace('claude-', '')
-        .replace(/-\d{8}$/, '');
+      const shortName = name.replace('claude-', '').replace(/-\d{8}$/, '');
       return {
         name: shortName,
         outputTokens: usage.outputTokens,
@@ -109,14 +103,39 @@ function useDerivedStats(data: ClaudeStatsCache | null) {
 function StatRow({
   label,
   value,
+  pct,
 }: {
   label: string;
   value: string | number;
+  pct?: number;
 }) {
   return (
-    <div className="flex items-center justify-between px-2 py-0.5 text-xs">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium tabular-nums">{value}</span>
+    <div className="px-2 py-0.5">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-medium tabular-nums">
+          {value}
+          {pct != null && (
+            <span className="text-muted-foreground ml-1">
+              ({Math.round(pct)}%)
+            </span>
+          )}
+        </span>
+      </div>
+      {pct != null && (
+        <div className="h-1 w-full rounded-full bg-muted mt-0.5">
+          <div
+            className={`h-full rounded-full transition-all ${
+              Math.min(pct, 100) >= 90
+                ? 'bg-destructive'
+                : Math.min(pct, 100) >= 70
+                  ? 'bg-yellow-500'
+                  : 'bg-primary'
+            }`}
+            style={{ width: `${Math.min(pct, 100)}%` }}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -124,6 +143,21 @@ function StatRow({
 export function ClaudeUsagePopover() {
   const { data, isLoading, refresh } = useClaudeUsage();
   const stats = useDerivedStats(data);
+  const [planId, setPlanId] = useState(getSelectedPlanId);
+  const plan = getPlanById(planId) ?? CLAUDE_PLANS[1];
+
+  const handlePlanChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value;
+    setPlanId(id);
+    setSelectedPlanId(id);
+  };
+
+  const pctToday = stats
+    ? (stats.today.messages / plan.messagesPerDay) * 100
+    : 0;
+  const pctWeek = stats
+    ? (stats.week.messages / (plan.messagesPerDay * 7)) * 100
+    : 0;
 
   return (
     <DropdownMenu onOpenChange={(open) => open && refresh()}>
@@ -145,10 +179,26 @@ export function ClaudeUsagePopover() {
         </Tooltip>
       </TooltipProvider>
 
-      <DropdownMenuContent align="start" className="w-64">
+      <DropdownMenuContent align="start" className="w-72">
         <DropdownMenuLabel className="text-sm font-semibold">
           Claude Code Usage
         </DropdownMenuLabel>
+
+        {/* Plan selector */}
+        <div className="px-2 pb-1">
+          <select
+            value={planId}
+            onChange={handlePlanChange}
+            className="w-full rounded-md px-2 py-1 text-xs bg-muted border border-border focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+          >
+            {CLAUDE_PLANS.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <DropdownMenuSeparator />
 
         {isLoading ? (
@@ -164,9 +214,16 @@ export function ClaudeUsagePopover() {
             <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Today
             </DropdownMenuLabel>
-            <StatRow label="Messages" value={stats.today.messages.toLocaleString()} />
+            <StatRow
+              label="Messages"
+              value={`${stats.today.messages.toLocaleString()} / ${plan.messagesPerDay.toLocaleString()}`}
+              pct={pctToday}
+            />
             <StatRow label="Sessions" value={stats.today.sessions} />
-            <StatRow label="Tool calls" value={stats.today.toolCalls.toLocaleString()} />
+            <StatRow
+              label="Tool calls"
+              value={stats.today.toolCalls.toLocaleString()}
+            />
             <StatRow
               label="Output tokens"
               value={formatNumber(stats.today.outputTokens)}
@@ -177,9 +234,16 @@ export function ClaudeUsagePopover() {
             <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Last 7 days
             </DropdownMenuLabel>
-            <StatRow label="Messages" value={stats.week.messages.toLocaleString()} />
+            <StatRow
+              label="Messages"
+              value={`${stats.week.messages.toLocaleString()} / ${(plan.messagesPerDay * 7).toLocaleString()}`}
+              pct={pctWeek}
+            />
             <StatRow label="Sessions" value={stats.week.sessions} />
-            <StatRow label="Tool calls" value={stats.week.toolCalls.toLocaleString()} />
+            <StatRow
+              label="Tool calls"
+              value={stats.week.toolCalls.toLocaleString()}
+            />
             <StatRow
               label="Output tokens"
               value={formatNumber(stats.week.outputTokens)}
@@ -220,6 +284,14 @@ export function ClaudeUsagePopover() {
                 ))}
               </>
             )}
+
+            <DropdownMenuSeparator />
+            <div className="px-2 py-1">
+              <p className="text-[10px] text-muted-foreground leading-tight">
+                Limits are estimates (~{plan.messagesPer5h} msg/5h window, ~3
+                windows/day). Edit config/claude-plans.ts to update.
+              </p>
+            </div>
           </div>
         )}
       </DropdownMenuContent>
