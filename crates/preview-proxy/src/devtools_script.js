@@ -44,6 +44,8 @@
     try {
       var u = new URL(url);
       u.searchParams.delete('_refresh');
+      u.searchParams.delete('_vk_host');
+      u.searchParams.delete('_vk_scheme');
       return u.toString();
     } catch (e) {
       return url;

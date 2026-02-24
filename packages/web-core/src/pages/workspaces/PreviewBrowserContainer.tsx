@@ -106,8 +106,8 @@ function stripPreviewRefreshParam(rawUrl: string): string | null {
 
 /**
  * Transform a proxy URL back to the dev server URL.
- * Proxy format: http://{devPort}.localhost:{proxyPort}{path}?_refresh=...
- * Dev format:   http://localhost:{devPort}{path}
+ * Proxy format: http://{devPort}.localhost:{proxyPort}{path}?_refresh=...&_vk_host=...&_vk_scheme=...
+ * Dev format:   {scheme}://{host}:{devPort}{path}
  */
 function transformProxyUrlToDevUrl(
   proxyUrl: string,
@@ -124,9 +124,14 @@ function transformProxyUrlToDevUrl(
       return null;
     }
 
+    // Extract custom host/scheme if present, then strip proxy params
+    const devHost = url.searchParams.get('_vk_host') || 'localhost';
+    const devScheme = url.searchParams.get('_vk_scheme') || 'http';
     url.searchParams.delete('_refresh');
+    url.searchParams.delete('_vk_host');
+    url.searchParams.delete('_vk_scheme');
 
-    const devUrl = new URL(`http://localhost${url.pathname}`);
+    const devUrl = new URL(`${devScheme}://${devHost}${url.pathname}`);
 
     const search = url.searchParams.toString();
     if (search) {
@@ -137,7 +142,9 @@ function transformProxyUrlToDevUrl(
       devUrl.hash = url.hash;
     }
 
-    if (devPort !== '80') {
+    const portNum = parseInt(devPort, 10);
+    const defaultPort = devScheme === 'https' ? 443 : 80;
+    if (portNum !== defaultPort) {
       devUrl.port = devPort;
     }
 
