@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT tc.id as \"id!: Uuid\",\n                      tc.workspace_id as \"workspace_id!: Uuid\",\n                      tc.channel_mapping_id as \"channel_mapping_id!: Uuid\",\n                      tc.conversation_ref,\n                      tc.reply_to_activity_id,\n                      tc.teams_activity_id,\n                      tc.created_at as \"created_at!: DateTime<Utc>\"\n               FROM teams_conversations tc\n               JOIN teams_channel_mappings tcm ON tc.channel_mapping_id = tcm.id\n               JOIN workspaces w ON tc.workspace_id = w.id\n               WHERE tcm.teams_channel_id = $1\n                 AND (w.archived IS NULL OR w.archived = 0)\n               ORDER BY tc.created_at DESC\n               LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "workspace_id!: Uuid",
+        "ordinal": 1,
+        "type_info": "Blob"
+      },
+      {
+        "name": "channel_mapping_id!: Uuid",
+        "ordinal": 2,
+        "type_info": "Blob"
+      },
+      {
+        "name": "conversation_ref",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "reply_to_activity_id",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "teams_activity_id",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at!: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "539289a307fd7616958ad94235f10dcb0f39b2e1adc72d8debb727918d4542d7"
+}

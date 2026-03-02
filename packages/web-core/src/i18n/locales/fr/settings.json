@@ -32,7 +32,9 @@
         "machineSettings": "Machine Settings",
         "accountSettings": "Account Settings",
         "pairOtherMachines": "Pair other machines",
-        "selectHost": "Select host"
+        "selectHost": "Select host",
+        "teams": "Bot Teams",
+        "teamsDesc": "Intégration du bot Microsoft Teams"
       }
     },
     "general": {

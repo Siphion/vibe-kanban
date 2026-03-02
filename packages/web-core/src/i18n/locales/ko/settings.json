@@ -32,7 +32,9 @@
         "machineSettings": "Machine Settings",
         "accountSettings": "Account Settings",
         "pairOtherMachines": "Pair other machines",
-        "selectHost": "Select host"
+        "selectHost": "Select host",
+        "teams": "Teams 봇",
+        "teamsDesc": "Microsoft Teams 봇 통합"
       }
     },
     "general": {

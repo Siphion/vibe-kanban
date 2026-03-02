@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM teams_channel_repos WHERE channel_mapping_id = $1 AND repo_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "d245ed12865634ab3fd27fd3eeb2d486affe302dd71cd66716bec4157d8609b6"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM teams_channel_mappings WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "9a466f59cde997470606ea243c7df1afbcdcf8586eba46c69096eed20d400bb4"
+}

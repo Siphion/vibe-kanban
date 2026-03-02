@@ -30,6 +30,7 @@ use services::services::{
     queued_message::QueuedMessageService,
     remote_client::{RemoteClient, RemoteClientError},
     repo::RepoService,
+    teams::TeamsService,
 };
 use tokio::sync::{Notify, RwLock};
 use tokio_util::sync::CancellationToken;
@@ -79,6 +80,7 @@ pub struct LocalDeployment {
     ssh_config: Arc<russh::server::Config>,
     pty: PtyService,
     pr_sync_notify: Arc<Notify>,
+    teams_service: Option<TeamsService>,
 }
 
 #[derive(Debug, Clone)]
@@ -213,6 +215,17 @@ impl Deployment for LocalDeployment {
 
         let ssh_config = embedded_ssh::config::build_config(relay_signing.signing_key());
 
+        // Initialize Teams service if enabled
+        let teams_service = {
+            let cfg = config.read().await;
+            if cfg.teams.enabled {
+                tracing::info!("Teams integration enabled");
+                Some(TeamsService::new(db.clone()))
+            } else {
+                None
+            }
+        };
+
         // We need to make analytics accessible to the ContainerService
         // TODO: Handle this more gracefully
         let analytics_ctx = analytics.as_ref().map(|s| AnalyticsContext {
@@ -231,6 +244,7 @@ impl Deployment for LocalDeployment {
             approvals.clone(),
             queued_message_service.clone(),
             remote_client.clone().ok(),
+            teams_service.clone(),
         )
         .await;
 
@@ -293,6 +307,7 @@ impl Deployment for LocalDeployment {
             ssh_config,
             pty,
             pr_sync_notify,
+            teams_service,
         };
 
         Ok(deployment)
@@ -380,6 +395,10 @@ impl Deployment for LocalDeployment {
 
     fn trusted_key_auth(&self) -> &TrustedKeyAuthRuntime {
         &self.trusted_key_auth
+    }
+
+    fn teams_service(&self) -> Option<&TeamsService> {
+        self.teams_service.as_ref()
     }
 }
 

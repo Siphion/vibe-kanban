@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE teams_conversations SET reply_to_activity_id = $2 WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "229ec439183d7daa63598217bf0bde479e485ba085092b6fedc2ddaee48030d3"
+}

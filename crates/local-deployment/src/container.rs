@@ -50,6 +50,7 @@ use services::services::{
     queued_message::QueuedMessageService,
     remote_client::RemoteClient,
     remote_sync,
+    teams::TeamsService,
 };
 use tokio::{sync::RwLock, task::JoinHandle};
 use tokio_util::io::ReaderStream;
@@ -85,6 +86,7 @@ pub struct LocalContainerService {
     queued_message_service: QueuedMessageService,
     notification_service: NotificationService,
     remote_client: Option<RemoteClient>,
+    teams_service: Option<TeamsService>,
 }
 
 impl LocalContainerService {
@@ -100,6 +102,7 @@ impl LocalContainerService {
         approvals: Approvals,
         queued_message_service: QueuedMessageService,
         remote_client: Option<RemoteClient>,
+        teams_service: Option<TeamsService>,
     ) -> Self {
         let child_store = Arc::new(RwLock::new(HashMap::new()));
         let cancellation_tokens = Arc::new(RwLock::new(HashMap::new()));
@@ -125,6 +128,7 @@ impl LocalContainerService {
             queued_message_service,
             notification_service,
             remote_client,
+            teams_service,
         };
 
         container.spawn_workspace_cleanup();
@@ -191,6 +195,31 @@ impl LocalContainerService {
             .collect::<Result<_, ContainerError>>()?;
 
         Ok((repositories, workspace_inputs))
+    }
+
+    /// Send a Teams notification when a workspace finishes.
+    /// Runs in a background task to avoid blocking the caller.
+    fn notify_teams_completion(&self, ctx: &ExecutionContext) {
+        if let Some(teams) = &self.teams_service {
+            let teams = teams.clone();
+            let config = self.config.clone();
+            let workspace_id = ctx.workspace.id;
+            let workspace_name = ctx
+                .workspace
+                .name
+                .clone()
+                .unwrap_or_else(|| ctx.workspace.branch.clone());
+            let status = format!("{:?}", ctx.execution_process.status);
+            tokio::spawn(async move {
+                let cfg = config.read().await;
+                if let Err(e) = teams
+                    .notify_workspace_completed(&cfg.teams, workspace_id, &workspace_name, &status)
+                    .await
+                {
+                    tracing::warn!("Teams completion notification failed: {}", e);
+                }
+            });
+        }
     }
 
     async fn get_child_from_store(&self, id: &Uuid) -> Option<Arc<RwLock<AsyncGroupChild>>> {
@@ -606,6 +635,7 @@ impl LocalContainerService {
                         // Manually finalize task since we're bypassing normal execution flow
                         container.finalize_task(&ctx).await;
                         already_finalized = true;
+                        container.notify_teams_completion(&ctx);
                     }
                 }
 
@@ -656,6 +686,7 @@ impl LocalContainerService {
                                 tracing::error!("Failed to start queued follow-up: {}", e);
                                 // Fall back to finalization if follow-up fails
                                 container.finalize_task(&ctx).await;
+                                container.notify_teams_completion(&ctx);
                             } else {
                                 started_queued_follow_up = true;
                             }
@@ -667,9 +698,11 @@ impl LocalContainerService {
                                 ctx.execution_process.status
                             );
                             container.finalize_task(&ctx).await;
+                            container.notify_teams_completion(&ctx);
                         }
                     } else {
                         container.finalize_task(&ctx).await;
+                        container.notify_teams_completion(&ctx);
                     }
 
                     let should_mark_turn_unseen = matches!(

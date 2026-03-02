@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id as \"id!: Uuid\",\n                      workspace_id as \"workspace_id!: Uuid\",\n                      channel_mapping_id as \"channel_mapping_id!: Uuid\",\n                      conversation_ref,\n                      reply_to_activity_id,\n                      teams_activity_id,\n                      created_at as \"created_at!: DateTime<Utc>\"\n               FROM teams_conversations\n               WHERE workspace_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "workspace_id!: Uuid",
+        "ordinal": 1,
+        "type_info": "Blob"
+      },
+      {
+        "name": "channel_mapping_id!: Uuid",
+        "ordinal": 2,
+        "type_info": "Blob"
+      },
+      {
+        "name": "conversation_ref",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "reply_to_activity_id",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "teams_activity_id",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at!: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "0e326829d123549789632e6a54af6faf2982be82973d3c7c3625ac3dc4e4fe39"
+}

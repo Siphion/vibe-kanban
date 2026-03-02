@@ -1,0 +1,68 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO teams_channel_mappings (id, teams_channel_id, teams_channel_name, teams_service_url, project_id, label)\n               VALUES ($1, $2, $3, $4, $5, $6)\n               RETURNING id as \"id!: Uuid\",\n                         teams_channel_id,\n                         teams_channel_name,\n                         teams_service_url,\n                         conversation_ref,\n                         project_id as \"project_id: Uuid\",\n                         label,\n                         created_at as \"created_at!: DateTime<Utc>\",\n                         updated_at as \"updated_at!: DateTime<Utc>\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "teams_channel_id",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "teams_channel_name",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "teams_service_url",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "conversation_ref",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "project_id: Uuid",
+        "ordinal": 5,
+        "type_info": "Blob"
+      },
+      {
+        "name": "label",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at!: DateTime<Utc>",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at!: DateTime<Utc>",
+        "ordinal": 8,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": [
+      true,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "1885ca0e3ecd6fd7e8ea49e5c8c7d796662f48ae7d7b3c1d1a3ea94300f09a8c"
+}

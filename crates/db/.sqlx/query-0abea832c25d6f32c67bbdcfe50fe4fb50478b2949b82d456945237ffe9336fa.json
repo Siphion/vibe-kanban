@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO teams_conversations\n               (id, workspace_id, channel_mapping_id, conversation_ref, reply_to_activity_id, teams_activity_id)\n               VALUES ($1, $2, $3, $4, $5, $6)\n               RETURNING id as \"id!: Uuid\",\n                         workspace_id as \"workspace_id!: Uuid\",\n                         channel_mapping_id as \"channel_mapping_id!: Uuid\",\n                         conversation_ref,\n                         reply_to_activity_id,\n                         teams_activity_id,\n                         created_at as \"created_at!: DateTime<Utc>\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "workspace_id!: Uuid",
+        "ordinal": 1,
+        "type_info": "Blob"
+      },
+      {
+        "name": "channel_mapping_id!: Uuid",
+        "ordinal": 2,
+        "type_info": "Blob"
+      },
+      {
+        "name": "conversation_ref",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "reply_to_activity_id",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "teams_activity_id",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at!: DateTime<Utc>",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "0abea832c25d6f32c67bbdcfe50fe4fb50478b2949b82d456945237ffe9336fa"
+}

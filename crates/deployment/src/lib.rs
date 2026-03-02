@@ -27,7 +27,9 @@ use services::services::{
     queued_message::QueuedMessageService,
     remote_client::RemoteClient,
     repo::RepoService,
+    teams::TeamsService,
 };
+
 use sqlx::Error as SqlxError;
 use thiserror::Error;
 use tokio::sync::RwLock;
@@ -123,6 +125,10 @@ pub trait Deployment: Clone + Send + Sync + 'static {
     }
 
     fn trusted_key_auth(&self) -> &TrustedKeyAuthRuntime;
+
+    fn teams_service(&self) -> Option<&TeamsService> {
+        None
+    }
 
     fn remote_client(&self) -> Result<RemoteClient, RemoteClientNotConfigured> {
         Err(RemoteClientNotConfigured)

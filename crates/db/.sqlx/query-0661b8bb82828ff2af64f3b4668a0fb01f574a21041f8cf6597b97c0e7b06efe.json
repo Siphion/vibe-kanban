@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE teams_channel_mappings SET conversation_ref = $2, updated_at = datetime('now','subsec') WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "0661b8bb82828ff2af64f3b4668a0fb01f574a21041f8cf6597b97c0e7b06efe"
+}
