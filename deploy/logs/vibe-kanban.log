@@ -1,0 +1,19 @@
+Starting vibe-kanban v0.1.21 (local dev)...
+[2m2026-03-03T14:30:57.357619Z[0m [32m INFO[0m [2mexecutors::profile[0m[2m:[0m No user profiles.json found, using defaults only
+[2m2026-03-03T14:30:57.377466Z[0m [32m INFO[0m [2mlocal_deployment[0m[2m:[0m Starting orphaned image cleanup...
+[2m2026-03-03T14:30:57.377604Z[0m [33m WARN[0m [2mlocal_deployment[0m[2m:[0m failed to load OAuth credentials [3me[0m[2m=[0mOs { code: 13, kind: PermissionDenied, message: "Permission denied" }
+[2m2026-03-03T14:30:57.380105Z[0m [32m INFO[0m [2mlocal_deployment[0m[2m:[0m Remote client initialized with URL: https://api.vibekanban.com
+[2m2026-03-03T14:30:57.381170Z[0m [32m INFO[0m [2mservices::services::pr_monitor[0m[2m:[0m Starting PR monitoring service with interval 60s
+[2m2026-03-03T14:30:57.384558Z[0m [32m INFO[0m [2mlocal_deployment::container[0m[2m:[0m Starting periodic workspace cleanup...
+[2m2026-03-03T14:30:57.393785Z[0m [32m INFO[0m [2mserver[0m[2m:[0m Main server on :38100, Preview proxy on :50376
+[2m2026-03-03T14:30:57.393802Z[0m [32m INFO[0m [2mserver[0m[2m:[0m Opening browser...
+[2m2026-03-03T14:31:00.657027Z[0m [33m WARN[0m [2mexecutors::executors::opencode[0m[2m:[0m Failed to fetch OpenCode providers: I/O error: OpenCode provider.list failed: HTTP 500 Internal Server Error {"name":"UnknownError","data":{"message":"Error: EACCES: permission denied, open '/Users/siphion/.local/share/opencode/storage/project/global.json'\n    at write (unknown)\n    at <anonymous> (src/storage/storage.ts:196:17)\n    at processTicksAndRejections (native:7:39)"}}
+[2m2026-03-03T14:31:00.657072Z[0m [33m WARN[0m [2mexecutors::executors::opencode[0m[2m:[0m Failed to fetch OpenCode agents: I/O error: OpenCode agent.list failed: HTTP 500 Internal Server Error {"name":"UnknownError","data":{"message":"Error: EACCES: permission denied, open '/Users/siphion/.local/share/opencode/storage/project/global.json'\n    at write (unknown)\n    at <anonymous> (src/storage/storage.ts:196:17)\n    at processTicksAndRejections (native:7:39)"}}
+[2m2026-03-03T14:31:00.657077Z[0m [33m WARN[0m [2mexecutors::executors::opencode[0m[2m:[0m Failed to fetch OpenCode commands: I/O error: OpenCode command.list failed: HTTP 500 Internal Server Error {"name":"UnknownError","data":{"message":"Error: EACCES: permission denied, open '/Users/siphion/.local/share/opencode/storage/project/global.json'\n    at write (unknown)\n    at <anonymous> (src/storage/storage.ts:196:17)\n    at processTicksAndRejections (native:7:39)"}}
+[2m2026-03-03T14:31:00.657123Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Sending SIGINT to process group 63012
+[2m2026-03-03T14:31:00.657157Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Waiting 2s for process group 63012 to exit
+[2m2026-03-03T14:31:02.659724Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Process group 63012 exited after SIGINT
+[2m2026-03-03T14:32:06.324039Z[0m [32m INFO[0m [2mserver::routes::repo[0m[2m:[0m Opened editor for repo a9ecd251-8605-4368-8c39-2512dd0b618c at path: /Users/siphion/dev/Gnl/gnlcryptex (remote mode)
+[2m2026-03-03T15:00:39.839081Z[0m [33m WARN[0m [2mserver::routes::terminal[0m[2m:[0m terminal WS receive error: WebSocket protocol error: Connection reset without closing handshake
+[2m2026-03-03T15:00:40.781077Z[0m [33m WARN[0m [2mserver::routes::approvals[0m[2m:[0m approvals WS receive error: WebSocket protocol error: Connection reset without closing handshake
+[2m2026-03-03T15:00:57.391980Z[0m [32m INFO[0m [2mlocal_deployment::container[0m[2m:[0m Starting periodic workspace cleanup...

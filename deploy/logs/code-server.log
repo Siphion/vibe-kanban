@@ -1,0 +1,25 @@
+[2026-03-03T14:30:58.120Z] info  code-server 4.108.2 3c0b449c6e6e37b44a8a7938c0d8a3049926a64c
+[2026-03-03T14:30:58.125Z] info  Using user-data-dir /Users/siphion/.local/share/code-server
+[2026-03-03T14:30:58.143Z] info  Using config file /Users/siphion/.config/code-server/config.yaml
+[2026-03-03T14:30:58.144Z] info  HTTP server listening on http://127.0.0.1:38200/
+[2026-03-03T14:30:58.144Z] info    - Authentication is disabled
+[2026-03-03T14:30:58.144Z] info    - Not serving HTTPS
+[2026-03-03T14:30:58.145Z] info  Session server listening on /Users/siphion/.local/share/code-server/code-server-ipc.sock
+[15:32:11] 
+
+
+
+
+[reconnection-grace-time] No CLI argument provided, using default: 10800000ms (10800s)
+[15:32:11] Extension host agent started.
+File not found: /opt/homebrew/Cellar/code-server/4.108.2/libexec/lib/vscode/node_modules/vsda/rust/web/vsda_bg.wasm
+File not found: /opt/homebrew/Cellar/code-server/4.108.2/libexec/lib/vscode/node_modules/vsda/rust/web/vsda.js
+[15:32:12] [127.0.0.1][2bd3f9d6][ManagementConnection] New connection established.
+[15:32:13] [127.0.0.1][a6a7e376][ExtensionHostConnection] New connection established.
+[15:32:13] [127.0.0.1][a6a7e376][ExtensionHostConnection] <64559> Launched Extension Host Process.
+[15:32:13] [127.0.0.1][a6a7e376][ExtensionHostConnection] <64559> [reconnection-grace-time] Extension host: read VSCODE_RECONNECTION_GRACE_TIME=10800000ms (10800s)
+
+[15:35:23] [127.0.0.1][2bd3f9d6][ManagementConnection] The client has reconnected.
+[15:35:23] [127.0.0.1][a6a7e376][ExtensionHostConnection] The client has reconnected.
+[15:58:51] [127.0.0.1][2bd3f9d6][ManagementConnection] The client has reconnected.
+[15:58:51] [127.0.0.1][a6a7e376][ExtensionHostConnection] The client has reconnected.
