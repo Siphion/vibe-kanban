@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "=== Esposizione pubblica su internet ==="
+echo "=== Tunnel Cloudflare *.siphion.dev ==="
 echo ""
-echo "  https://vk.siphion.dev    (Vibe Kanban)"
-echo "  https://code.siphion.dev  (code-server)"
+echo "  Espone tutto ciò che Caddy serve su :443"
 echo ""
 echo "Premi Ctrl+C per chiudere l'accesso pubblico."
 echo ""
