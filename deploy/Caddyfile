@@ -60,6 +60,8 @@ vk.siphion.dev {
 import sites/*.caddy
 
 :8080 {
+	import sites/*.8080
+
 	@vk host vk.siphion.dev
 	@code host code.siphion.dev
 
