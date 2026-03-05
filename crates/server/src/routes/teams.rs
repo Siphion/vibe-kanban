@@ -8,8 +8,11 @@ use axum::{
     routing::{delete, get, post},
 };
 use db::models::{
+    custom_command::CustomCommand,
+    execution_process::{ExecutionProcess, ExecutionProcessRunReason, ExecutionProcessStatus},
     repo::Repo,
     scratch::DraftFollowUpData,
+    session::{CreateSession, Session},
     teams::{
         CreateTeamsChannelMapping, CreateTeamsChannelRepo, TeamsChannelMapping, TeamsChannelRepo,
         TeamsConversation, UpdateTeamsChannelMapping,
@@ -18,7 +21,13 @@ use db::models::{
     workspace_repo::{CreateWorkspaceRepo, WorkspaceRepo},
 };
 use deployment::Deployment;
-use executors::profile::ExecutorConfig;
+use executors::{
+    actions::{
+        ExecutorAction, ExecutorActionType,
+        script::{ScriptContext, ScriptRequest, ScriptRequestLanguage},
+    },
+    profile::ExecutorConfig,
+};
 use serde::Deserialize;
 use services::services::{
     container::ContainerService,
@@ -180,7 +189,11 @@ async fn process_message(
 ) -> Result<(), TeamsError> {
     let raw_text = activity.text.as_deref().unwrap_or("");
     let stripped = TeamsService::strip_mentions(raw_text);
-    let command = TeamsService::parse_command(&stripped);
+    let pool = &deployment.db().pool;
+    let custom_command_names = CustomCommand::find_all_names(pool)
+        .await
+        .unwrap_or_default();
+    let command = TeamsService::parse_command(&stripped, Some(&custom_command_names));
 
     let service_url = activity
         .service_url
@@ -190,11 +203,15 @@ async fn process_message(
 
     let conversation_id = &activity.conversation.id;
     let reply_to_id = activity.id.as_deref();
-    let pool = &deployment.db().pool;
 
     match command {
         TeamsCommand::Help => {
-            let card = cards::build_help_card();
+            let custom_cmds = CustomCommand::find_all(pool).await.unwrap_or_default();
+            let custom_cmd_info: Vec<(String, Option<String>, String)> = custom_cmds
+                .into_iter()
+                .map(|c| (c.name, c.description, c.mode))
+                .collect();
+            let card = cards::build_help_card(&custom_cmd_info);
             teams
                 .send_card_reply(
                     service_url,
@@ -656,6 +673,344 @@ async fn process_message(
                     &teams_config,
                 )
                 .await?;
+        }
+
+        TeamsCommand::CustomStart { ref name } => {
+            let active = find_active_workspace(pool, conversation_id).await?;
+            match active {
+                Some((ws, _conv)) => {
+                    let cmd = CustomCommand::find_by_name(pool, name).await?;
+                    match cmd {
+                        Some(cmd) => {
+                            let session =
+                                match Session::find_latest_by_workspace_id(pool, ws.id).await? {
+                                    Some(s) => s,
+                                    None => Session::create(
+                                        pool,
+                                        &CreateSession {
+                                            executor: Some(format!("custom-cmd-{}", cmd.name)),
+                                        },
+                                        Uuid::new_v4(),
+                                        ws.id,
+                                    )
+                                    .await
+                                    .map_err(|e| TeamsError::HttpError(e.to_string()))?,
+                                };
+
+                            let executor_action = ExecutorAction::new(
+                                ExecutorActionType::ScriptRequest(ScriptRequest {
+                                    script: cmd.script.clone(),
+                                    language: ScriptRequestLanguage::Bash,
+                                    context: ScriptContext::DevServer,
+                                    working_dir: None,
+                                }),
+                                None,
+                            );
+
+                            match deployment
+                                .container()
+                                .start_execution(
+                                    &ws,
+                                    &session,
+                                    &executor_action,
+                                    &ExecutionProcessRunReason::DevServer,
+                                )
+                                .await
+                            {
+                                Ok(_) => {
+                                    teams
+                                        .send_text_reply(
+                                            service_url,
+                                            conversation_id,
+                                            reply_to_id,
+                                            &format!("Started command `{}`.", cmd.name),
+                                            &teams_config,
+                                        )
+                                        .await?;
+                                }
+                                Err(e) => {
+                                    tracing::error!("Custom command start failed: {}", e);
+                                    teams
+                                        .send_text_reply(
+                                            service_url,
+                                            conversation_id,
+                                            reply_to_id,
+                                            &format!("Failed to start `{}`: {}", cmd.name, e),
+                                            &teams_config,
+                                        )
+                                        .await?;
+                                }
+                            }
+                        }
+                        None => {
+                            teams
+                                .send_text_reply(
+                                    service_url,
+                                    conversation_id,
+                                    reply_to_id,
+                                    &format!("Custom command `{}` not found.", name),
+                                    &teams_config,
+                                )
+                                .await?;
+                        }
+                    }
+                }
+                None => {
+                    teams
+                        .send_text_reply(
+                            service_url,
+                            conversation_id,
+                            reply_to_id,
+                            "No active workspace for this channel.",
+                            &teams_config,
+                        )
+                        .await?;
+                }
+            }
+        }
+
+        TeamsCommand::CustomStop { ref name } => {
+            let active = find_active_workspace(pool, conversation_id).await?;
+            match active {
+                Some((ws, _conv)) => {
+                    // Find running dev servers and stop the one matching this custom command
+                    let running =
+                        ExecutionProcess::find_running_dev_servers_by_workspace(pool, ws.id)
+                            .await
+                            .unwrap_or_default();
+
+                    let mut stopped = false;
+                    for proc in &running {
+                        // Match by checking the script content of the execution
+                        // The most recent dev server for this command name is the one we want
+                        if let Some(cmd) = CustomCommand::find_by_name(pool, name).await? {
+                            if let Ok(Some(session)) =
+                                Session::find_by_id(pool, proc.session_id).await
+                            {
+                                let expected_executor = format!("custom-cmd-{}", cmd.name);
+                                if session
+                                    .executor
+                                    .as_deref()
+                                    .is_some_and(|e| e == expected_executor)
+                                {
+                                    if let Err(e) = deployment
+                                        .container()
+                                        .stop_execution(proc, ExecutionProcessStatus::Killed)
+                                        .await
+                                    {
+                                        tracing::error!(
+                                            "Failed to stop custom command {}: {}",
+                                            name,
+                                            e
+                                        );
+                                    }
+                                    stopped = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if stopped {
+                        teams
+                            .send_text_reply(
+                                service_url,
+                                conversation_id,
+                                reply_to_id,
+                                &format!("Stopped command `{}`.", name),
+                                &teams_config,
+                            )
+                            .await?;
+                    } else {
+                        teams
+                            .send_text_reply(
+                                service_url,
+                                conversation_id,
+                                reply_to_id,
+                                &format!("No running instance of `{}` found.", name),
+                                &teams_config,
+                            )
+                            .await?;
+                    }
+                }
+                None => {
+                    teams
+                        .send_text_reply(
+                            service_url,
+                            conversation_id,
+                            reply_to_id,
+                            "No active workspace for this channel.",
+                            &teams_config,
+                        )
+                        .await?;
+                }
+            }
+        }
+
+        TeamsCommand::CustomRun { ref name } => {
+            let active = find_active_workspace(pool, conversation_id).await?;
+            match active {
+                Some((ws, _conv)) => {
+                    let cmd = CustomCommand::find_by_name(pool, name).await?;
+                    match cmd {
+                        Some(cmd) => {
+                            if cmd.mode == "oneshot" {
+                                // One-shot: spawn directly, wait for output, send result
+                                let container_ref = deployment
+                                    .container()
+                                    .ensure_container_exists(&ws)
+                                    .await
+                                    .map_err(|e| {
+                                        TeamsError::HttpError(format!("container error: {}", e))
+                                    })?;
+                                let workspace_path = std::path::Path::new(&container_ref);
+
+                                let result = tokio::time::timeout(
+                                    Duration::from_secs(60),
+                                    tokio::process::Command::new("bash")
+                                        .arg("-c")
+                                        .arg(&cmd.script)
+                                        .current_dir(workspace_path)
+                                        .output(),
+                                )
+                                .await;
+
+                                let (output_text, exit_code, timed_out) = match result {
+                                    Ok(Ok(output)) => {
+                                        let stdout = String::from_utf8_lossy(&output.stdout);
+                                        let stderr = String::from_utf8_lossy(&output.stderr);
+                                        let mut combined = String::new();
+                                        if !stdout.is_empty() {
+                                            combined.push_str(&stdout);
+                                        }
+                                        if !stderr.is_empty() {
+                                            if !combined.is_empty() {
+                                                combined.push('\n');
+                                            }
+                                            combined.push_str(&stderr);
+                                        }
+                                        if combined.len() > 2000 {
+                                            combined.truncate(2000);
+                                            combined.push_str("\n... (truncated)");
+                                        }
+                                        (combined, output.status.code(), false)
+                                    }
+                                    Ok(Err(e)) => {
+                                        (format!("Failed to execute: {}", e), None, false)
+                                    }
+                                    Err(_) => (
+                                        "Command timed out after 60 seconds.".to_string(),
+                                        None,
+                                        true,
+                                    ),
+                                };
+
+                                let card = cards::build_command_output_card(
+                                    &cmd.name,
+                                    &output_text,
+                                    exit_code,
+                                    timed_out,
+                                );
+                                teams
+                                    .send_card_reply(
+                                        service_url,
+                                        conversation_id,
+                                        reply_to_id,
+                                        card,
+                                        &teams_config,
+                                    )
+                                    .await?;
+                            } else {
+                                // Background mode without start/stop: treat as CustomStart
+                                let session = match Session::find_latest_by_workspace_id(
+                                    pool, ws.id,
+                                )
+                                .await?
+                                {
+                                    Some(s) => s,
+                                    None => Session::create(
+                                        pool,
+                                        &CreateSession {
+                                            executor: Some(format!("custom-cmd-{}", cmd.name)),
+                                        },
+                                        Uuid::new_v4(),
+                                        ws.id,
+                                    )
+                                    .await
+                                    .map_err(|e| TeamsError::HttpError(e.to_string()))?,
+                                };
+
+                                let executor_action = ExecutorAction::new(
+                                    ExecutorActionType::ScriptRequest(ScriptRequest {
+                                        script: cmd.script.clone(),
+                                        language: ScriptRequestLanguage::Bash,
+                                        context: ScriptContext::DevServer,
+                                        working_dir: None,
+                                    }),
+                                    None,
+                                );
+
+                                match deployment
+                                    .container()
+                                    .start_execution(
+                                        &ws,
+                                        &session,
+                                        &executor_action,
+                                        &ExecutionProcessRunReason::DevServer,
+                                    )
+                                    .await
+                                {
+                                    Ok(_) => {
+                                        teams
+                                            .send_text_reply(
+                                                service_url,
+                                                conversation_id,
+                                                reply_to_id,
+                                                &format!("Started command `{}`.", cmd.name),
+                                                &teams_config,
+                                            )
+                                            .await?;
+                                    }
+                                    Err(e) => {
+                                        tracing::error!("Custom command start failed: {}", e);
+                                        teams
+                                            .send_text_reply(
+                                                service_url,
+                                                conversation_id,
+                                                reply_to_id,
+                                                &format!("Failed to start `{}`: {}", cmd.name, e),
+                                                &teams_config,
+                                            )
+                                            .await?;
+                                    }
+                                }
+                            }
+                        }
+                        None => {
+                            teams
+                                .send_text_reply(
+                                    service_url,
+                                    conversation_id,
+                                    reply_to_id,
+                                    &format!("Custom command `{}` not found.", name),
+                                    &teams_config,
+                                )
+                                .await?;
+                        }
+                    }
+                }
+                None => {
+                    teams
+                        .send_text_reply(
+                            service_url,
+                            conversation_id,
+                            reply_to_id,
+                            "No active workspace for this channel.",
+                            &teams_config,
+                        )
+                        .await?;
+                }
+            }
         }
 
         TeamsCommand::Plan { ref prompt } | TeamsCommand::FreeText { text: ref prompt } => {

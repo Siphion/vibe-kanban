@@ -51,6 +51,12 @@ vk.siphion.dev {
 		reverse_proxy 127.0.0.1:38100
 	}
 
+	# Preview proxy for iframe content (path-based routing for remote access)
+	route /_vk_preview/* {
+		authorize with mypolicy
+		reverse_proxy 127.0.0.1:{$PREVIEW_PROXY_PORT:38101}
+	}
+
 	route /* {
 		authorize with mypolicy
 		reverse_proxy 127.0.0.1:38100
@@ -71,6 +77,10 @@ import sites/*.caddy
 		}
 		route /api/teams/webhook {
 			reverse_proxy 127.0.0.1:38100
+		}
+		route /_vk_preview/* {
+			authorize with mypolicy
+			reverse_proxy 127.0.0.1:{$PREVIEW_PROXY_PORT:38101}
 		}
 		route /* {
 			authorize with mypolicy

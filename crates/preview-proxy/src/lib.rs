@@ -42,6 +42,7 @@ impl PreviewProxyService {
     pub fn new() -> Self {
         let http_client = Client::builder()
             .redirect(reqwest::redirect::Policy::none())
+            .danger_accept_invalid_certs(true)
             .build()
             .expect("failed to build preview proxy HTTP client");
         Self { http_client }

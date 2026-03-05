@@ -34,7 +34,9 @@
         "relay": "Remote Access",
         "relayDesc": "Relay tunnel and enrollment",
         "teams": "Teams Bot",
-        "teamsDesc": "Microsoft Teams bot integration"
+        "teamsDesc": "Microsoft Teams bot integration",
+        "commands": "Custom Commands",
+        "commandsDesc": "Bot commands linked to scripts"
       }
     },
     "hostPicker": {

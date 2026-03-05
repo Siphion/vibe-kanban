@@ -10,6 +10,7 @@ pub mod approvals;
 pub mod claude_usage;
 pub mod config;
 pub mod containers;
+pub mod custom_commands;
 pub mod filesystem;
 // pub mod github;
 pub mod attachments;
@@ -60,6 +61,7 @@ pub fn router(deployment: DeploymentImpl) -> IntoMakeService<Router> {
         .merge(terminal::router())
         .route("/ssh-session", get(ssh_session::ssh_session_ws))
         .merge(teams::management_router())
+        .merge(custom_commands::router())
         .nest("/remote", remote::router())
         .merge(webrtc::router())
         .nest("/attachments", attachments::routes())

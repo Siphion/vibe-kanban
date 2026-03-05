@@ -4,10 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PlusIcon, SpinnerIcon, TrashIcon } from '@phosphor-icons/react';
 import { useUserSystem } from '@/shared/hooks/useUserSystem';
 import { PrimaryButton } from '@vibe/ui/components/PrimaryButton';
-import {
-  teamsApi,
-  type TeamsChannelMapping,
-} from '@/shared/lib/teams-api';
+import { teamsApi, type TeamsChannelMapping } from '@/shared/lib/teams-api';
 import { repoApi } from '@/shared/lib/api';
 import type { Repo } from 'shared/types';
 import {

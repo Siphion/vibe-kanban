@@ -150,6 +150,22 @@ const toOriginUrlInfo = (
 
 export const detectPreviewUrl = (line: string): PreviewUrlInfo | null => {
   const cleaned = stripAnsi(line);
+
+  // Priority: check for explicit $VK-URL$ marker
+  const markerPattern = /\$VK-URL\$(https?:\/\/\S+?)\$VK-URL\$/;
+  const markerMatch = markerPattern.exec(cleaned);
+  if (markerMatch) {
+    try {
+      const parsed = new URL(markerMatch[1]);
+      return toOriginUrlInfo(
+        parsed,
+        parsed.protocol === 'https:' ? 'https' : 'http'
+      );
+    } catch {
+      // marker found but invalid URL, fall through
+    }
+  }
+
   // Some dev servers split terminal output into chunks, which can break
   // ports as `:40\n00`. Collapse whitespace inside the port before matching.
   const normalized = cleaned.replace(

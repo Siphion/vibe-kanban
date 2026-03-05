@@ -1058,6 +1058,64 @@ export const tagsApi = {
   },
 };
 
+// Custom Commands API
+export interface CustomCommand {
+  id: string;
+  name: string;
+  script: string;
+  description: string | null;
+  mode: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateCustomCommand {
+  name: string;
+  script: string;
+  description?: string | null;
+  mode?: string | null;
+}
+
+export interface UpdateCustomCommand {
+  name?: string;
+  script?: string;
+  description?: string | null;
+  mode?: string | null;
+}
+
+export const customCommandsApi = {
+  list: async (): Promise<CustomCommand[]> => {
+    const response = await makeRequest('/api/commands');
+    return handleApiResponse<CustomCommand[]>(response);
+  },
+
+  create: async (data: CreateCustomCommand): Promise<CustomCommand> => {
+    const response = await makeRequest('/api/commands', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return handleApiResponse<CustomCommand>(response);
+  },
+
+  update: async (
+    id: string,
+    data: UpdateCustomCommand
+  ): Promise<CustomCommand> => {
+    const response = await makeRequest(`/api/commands/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    return handleApiResponse<CustomCommand>(response);
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const response = await makeRequest(`/api/commands/${id}`, {
+      method: 'DELETE',
+    });
+    return handleApiResponse<void>(response);
+  },
+};
+
 // MCP Servers APIs
 export const mcpServersApi = {
   load: async (

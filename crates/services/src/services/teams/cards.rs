@@ -46,27 +46,38 @@ fn text_block_subtle(text: &str) -> Value {
 
 // ── Public Card Builders ────────────────────────────────────────────────────
 
-pub fn build_help_card() -> Value {
+pub fn build_help_card(custom_commands: &[(String, Option<String>, String)]) -> Value {
+    let mut facts = vec![
+        fact("`<text>`", "Create new task or send follow-up"),
+        fact("`plan <text>`", "Create task in plan-first mode"),
+        fact("`approve`", "Approve pending plan"),
+        fact("`reject <reason>`", "Reject plan with feedback"),
+        fact("`status`", "Show active workspace status"),
+        fact("`diff`", "Show diff summary"),
+        fact("`branch`", "Show branch info"),
+        fact("`push`", "Push branch to remote"),
+        fact("`done`", "Complete workspace"),
+        fact("`donemerge`", "Complete and merge"),
+        fact("`donepr`", "Complete and create PR"),
+        fact("`cancel`", "Cancel active workspace"),
+        fact("`retry`", "Retry failed workspace"),
+        fact("`list`", "List recent workspaces"),
+        fact("`help`", "Show this help"),
+    ];
+
+    for (name, desc, mode) in custom_commands {
+        let description = desc.as_deref().unwrap_or("Custom command");
+        if mode == "oneshot" {
+            facts.push(fact(&format!("`{}`", name), description));
+        } else {
+            facts.push(fact(&format!("`{} start/stop`", name), description));
+        }
+    }
+
     let body = vec![
         header("Vibe Kanban Bot — Commands"),
         text_block("Mention the bot followed by a command:"),
-        fact_set(vec![
-            fact("`<text>`", "Create new task or send follow-up"),
-            fact("`plan <text>`", "Create task in plan-first mode"),
-            fact("`approve`", "Approve pending plan"),
-            fact("`reject <reason>`", "Reject plan with feedback"),
-            fact("`status`", "Show active workspace status"),
-            fact("`diff`", "Show diff summary"),
-            fact("`branch`", "Show branch info"),
-            fact("`push`", "Push branch to remote"),
-            fact("`done`", "Complete workspace"),
-            fact("`donemerge`", "Complete and merge"),
-            fact("`donepr`", "Complete and create PR"),
-            fact("`cancel`", "Cancel active workspace"),
-            fact("`retry`", "Retry failed workspace"),
-            fact("`list`", "List recent workspaces"),
-            fact("`help`", "Show this help"),
-        ]),
+        fact_set(facts),
     ];
     wrap_card(body, None)
 }
@@ -294,6 +305,40 @@ pub fn build_followup_ack_card(message_preview: &str, workspace_name: &str) -> V
         header(&format!("Follow-up sent to: {}", workspace_name)),
         text_block_subtle(&preview),
     ];
+    wrap_card(body, None)
+}
+
+pub fn build_command_output_card(
+    name: &str,
+    output: &str,
+    exit_code: Option<i32>,
+    timed_out: bool,
+) -> Value {
+    let status = if timed_out {
+        "Timed out".to_string()
+    } else {
+        match exit_code {
+            Some(0) => "Success".to_string(),
+            Some(code) => format!("Exit code {}", code),
+            None => "Unknown".to_string(),
+        }
+    };
+
+    let mut body = vec![
+        header(&format!("Command: {}", name)),
+        fact_set(vec![fact("Status", &status)]),
+    ];
+
+    if !output.is_empty() {
+        body.push(json!({
+            "type": "TextBlock",
+            "text": format!("```\n{}\n```", output),
+            "wrap": true,
+            "fontType": "Monospace",
+            "size": "Small"
+        }));
+    }
+
     wrap_card(body, None)
 }
 

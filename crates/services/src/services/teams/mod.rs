@@ -95,7 +95,12 @@ impl TeamsService {
     }
 
     /// Parse a command from stripped message text.
-    pub fn parse_command(text: &str) -> TeamsCommand {
+    ///
+    /// `custom_command_names` is an optional list of registered custom command
+    /// names (case-insensitive). When the first word matches one of these names
+    /// and the second word is "start" or "stop", a `CustomStart` / `CustomStop`
+    /// variant is returned.
+    pub fn parse_command(text: &str, custom_command_names: Option<&[String]>) -> TeamsCommand {
         let trimmed = text.trim();
         if trimmed.is_empty() {
             return TeamsCommand::Help;
@@ -131,9 +136,36 @@ impl TeamsService {
                     TeamsCommand::Plan { prompt }
                 }
             }
-            _ => TeamsCommand::FreeText {
-                text: trimmed.to_string(),
-            },
+            other => {
+                // Check against custom commands
+                if let Some(names) = custom_command_names {
+                    let other_lower = other.to_lowercase();
+                    let is_custom = names.iter().any(|n| n.to_lowercase() == other_lower);
+                    if is_custom {
+                        let rest_lower = rest.unwrap_or("").to_lowercase();
+                        match rest_lower.as_str() {
+                            "start" => {
+                                return TeamsCommand::CustomStart {
+                                    name: other.to_string(),
+                                };
+                            }
+                            "stop" => {
+                                return TeamsCommand::CustomStop {
+                                    name: other.to_string(),
+                                };
+                            }
+                            _ => {
+                                return TeamsCommand::CustomRun {
+                                    name: other.to_string(),
+                                };
+                            }
+                        }
+                    }
+                }
+                TeamsCommand::FreeText {
+                    text: trimmed.to_string(),
+                }
+            }
         }
     }
 

@@ -63,7 +63,7 @@ else
     sudo -u "$REAL_USER" bash -c "
         export NVM_DIR='/Users/$REAL_USER/.nvm'
         [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\"
-        HOST=127.0.0.1 PORT=38100 VK_ALLOWED_ORIGINS='https://$TS_HOSTNAME' \
+        HOST=127.0.0.1 PORT=38100 PREVIEW_PROXY_PORT=${PREVIEW_PROXY_PORT:-38101} VK_ALLOWED_ORIGINS='https://$TS_HOSTNAME' \
             nohup node '$PROJECT_DIR/npx-cli/bin/cli.js' > '$LOGS_DIR/vibe-kanban.log' 2>&1 &
     "
     sleep 2

@@ -56,6 +56,9 @@ pub enum TeamsCommand {
     Approve,
     Reject { reason: Option<String> },
     Plan { prompt: String },
+    CustomStart { name: String },
+    CustomStop { name: String },
+    CustomRun { name: String },
     FreeText { text: String },
 }
 
