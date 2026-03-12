@@ -67,10 +67,11 @@ services:
     depends_on:
       remote-db:
         condition: service_healthy
-      remote-server:
+      vk-remote-server:
         condition: service_healthy
 
-  remote-server:
+  vk-remote-server:
+    container_name: vk-remote-server
     build:
       context: ../..
       dockerfile: crates/remote/Dockerfile
