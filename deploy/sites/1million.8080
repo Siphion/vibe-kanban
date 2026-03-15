@@ -1,0 +1,19 @@
+@1million host 1million.siphion.dev
+
+route @1million {
+	route /auth* {
+		authenticate with myportal
+	}
+	route /api/* {
+		authorize with 1million_policy
+		reverse_proxy 127.0.0.1:8888
+	}
+	route /health {
+		authorize with 1million_policy
+		reverse_proxy 127.0.0.1:8888
+	}
+	route /* {
+		authorize with 1million_policy
+		reverse_proxy 127.0.0.1:8887
+	}
+}

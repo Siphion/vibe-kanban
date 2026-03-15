@@ -36,6 +36,12 @@
 			allow roles authp/admin authp/user
 			crypto key verify {$JWT_SHARED_KEY}
 		}
+
+		authorization policy 1million_policy {
+			set auth url https://1million.siphion.dev/auth/
+			allow roles authp/admin authp/user
+			crypto key verify {$JWT_SHARED_KEY}
+		}
 	}
 }
 
