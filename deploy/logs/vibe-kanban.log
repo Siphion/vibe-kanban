@@ -1,11 +1,37 @@
 Starting vibe-kanban v0.1.31 (local dev)...
-[2m2026-03-17T12:34:39.172399Z[0m [32m INFO[0m [2mexecutors::profile[0m[2m:[0m Loaded user profile overrides from profiles.json
-[2m2026-03-17T12:34:39.205321Z[0m [32m INFO[0m [2mlocal_deployment[0m[2m:[0m Starting orphaned image cleanup...
-[2m2026-03-17T12:34:39.206068Z[0m [32m INFO[0m [2mlocal_deployment[0m[2m:[0m Remote client initialized with URL: https://api.vk.siphion.dev
-[2m2026-03-17T12:34:39.206888Z[0m [32m INFO[0m [2mservices::services::pr_monitor[0m[2m:[0m Starting PR monitoring service with interval 60s
-[2m2026-03-17T12:34:39.218583Z[0m [32m INFO[0m [2mlocal_deployment::container[0m[2m:[0m Starting periodic workspace cleanup...
-[2m2026-03-17T12:34:39.226620Z[0m [32m INFO[0m [2mserver::startup[0m[2m:[0m Server on :38100, Preview proxy on :38101
-[2m2026-03-17T12:34:39.227583Z[0m [32m INFO[0m [2mserver[0m[2m:[0m Opening browser...
-[2m2026-03-17T12:34:46.739266Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Sending SIGINT to process group 40048
-[2m2026-03-17T12:34:46.739598Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Waiting 2s for process group 40048 to exit
-[2m2026-03-17T12:34:48.741462Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Process group 40048 exited after SIGINT
+[2m2026-03-17T13:19:12.858255Z[0m [32m INFO[0m [2mexecutors::profile[0m[2m:[0m Loaded user profile overrides from profiles.json
+[2m2026-03-17T13:19:12.882560Z[0m [32m INFO[0m [2mlocal_deployment[0m[2m:[0m Starting orphaned image cleanup...
+[2m2026-03-17T13:19:12.883351Z[0m [32m INFO[0m [2mlocal_deployment[0m[2m:[0m Remote client initialized with URL: https://api.vk.siphion.dev:8443
+[2m2026-03-17T13:19:12.884916Z[0m [32m INFO[0m [2mservices::services::pr_monitor[0m[2m:[0m Starting PR monitoring service with interval 60s
+[2m2026-03-17T13:19:12.888135Z[0m [32m INFO[0m [2mlocal_deployment::container[0m[2m:[0m Starting periodic workspace cleanup...
+[2m2026-03-17T13:19:12.896970Z[0m [32m INFO[0m [2mserver::startup[0m[2m:[0m Server on :38100, Preview proxy on :38101
+[2m2026-03-17T13:19:12.898205Z[0m [32m INFO[0m [2mserver[0m[2m:[0m Opening browser...
+[2m2026-03-17T13:19:17.006842Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Sending SIGINT to process group 55500
+[2m2026-03-17T13:19:17.007069Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Waiting 2s for process group 55500 to exit
+[2m2026-03-17T13:19:19.008566Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Process group 55500 exited after SIGINT
+[2m2026-03-17T13:49:12.892172Z[0m [32m INFO[0m [2mlocal_deployment::container[0m[2m:[0m Starting periodic workspace cleanup...
+[2m2026-03-17T13:57:36.693926Z[0m [32m INFO[0m [2mserver::routes::sessions[0m[2m:[0m Workspace { id: 5a7a2de1-612b-4bee-9c3c-7777570d2178, task_id: None, container_ref: Some("/var/folders/gc/kslgmnjj6tl9k1_lz9t2h2y80000gn/T/vibe-kanban/worktrees/5a7a-mi-spieghi-perch"), branch: "vk/5a7a-mi-spieghi-perch", setup_completed_at: None, created_at: 2026-03-15T19:36:40.567Z, updated_at: 2026-03-17T13:56:53.286Z, archived: false, pinned: false, name: Some("mi spieghi perche in flash loan calcoliamo i gas fee?"), worktree_deleted: false }
+[2m2026-03-17T13:59:13.260801Z[0m [32m INFO[0m [2mexecutors::executors::claude::protocol[0m[2m:[0m Cancellation received in read_loop, sending interrupt to Claude
+[2m2026-03-17T13:59:14.041083Z[0m [31mERROR[0m [2mlocal_deployment::container[0m[2m:[0m Failed to stop execution process e6b17f42-7602-4c32-a0b6-b56d4e769095: Failed to kill process: ESRCH: No such process
+[2m2026-03-17T13:59:14.897213Z[0m [32m INFO[0m [2mserver::routes::sessions[0m[2m:[0m Workspace { id: 5a7a2de1-612b-4bee-9c3c-7777570d2178, task_id: None, container_ref: Some("/var/folders/gc/kslgmnjj6tl9k1_lz9t2h2y80000gn/T/vibe-kanban/worktrees/5a7a-mi-spieghi-perch"), branch: "vk/5a7a-mi-spieghi-perch", setup_completed_at: None, created_at: 2026-03-15T19:36:40.567Z, updated_at: 2026-03-17T13:58:57.668Z, archived: false, pinned: false, name: Some("mi spieghi perche in flash loan calcoliamo i gas fee?"), worktree_deleted: false }
+[2m2026-03-17T14:19:12.897002Z[0m [32m INFO[0m [2mlocal_deployment::container[0m[2m:[0m Starting periodic workspace cleanup...
+[2m2026-03-17T14:20:42.500175Z[0m [31mERROR[0m [2mserver::error[0m[2m:[0m API request failed [3merror_type[0m[2m=[0m"GitServiceError" [3mstatus[0m[2m=[0m500 Internal Server Error [3merror[0m[2m=[0mGitService(Git(Error { code: -3, klass: 2, message: "failed to resolve path '/Users/siphion/dev/1million/1million': No such file or directory" }))
+[2m2026-03-17T14:20:43.517752Z[0m [31mERROR[0m [2mserver::error[0m[2m:[0m API request failed [3merror_type[0m[2m=[0m"GitServiceError" [3mstatus[0m[2m=[0m500 Internal Server Error [3merror[0m[2m=[0mGitService(Git(Error { code: -3, klass: 2, message: "failed to resolve path '/Users/siphion/dev/1million/1million': No such file or directory" }))
+[2m2026-03-17T14:20:45.524480Z[0m [31mERROR[0m [2mserver::error[0m[2m:[0m API request failed [3merror_type[0m[2m=[0m"GitServiceError" [3mstatus[0m[2m=[0m500 Internal Server Error [3merror[0m[2m=[0mGitService(Git(Error { code: -3, klass: 2, message: "failed to resolve path '/Users/siphion/dev/1million/1million': No such file or directory" }))
+[2m2026-03-17T14:20:51.722207Z[0m [31mERROR[0m [2mserver::error[0m[2m:[0m API request failed [3merror_type[0m[2m=[0m"GitServiceError" [3mstatus[0m[2m=[0m500 Internal Server Error [3merror[0m[2m=[0mGitService(Git(Error { code: -3, klass: 2, message: "failed to resolve path '/Users/siphion/dev/1million/1million': No such file or directory" }))
+[2m2026-03-17T14:20:52.746869Z[0m [31mERROR[0m [2mserver::error[0m[2m:[0m API request failed [3merror_type[0m[2m=[0m"GitServiceError" [3mstatus[0m[2m=[0m500 Internal Server Error [3merror[0m[2m=[0mGitService(Git(Error { code: -3, klass: 2, message: "failed to resolve path '/Users/siphion/dev/1million/1million': No such file or directory" }))
+[2m2026-03-17T14:20:54.753079Z[0m [31mERROR[0m [2mserver::error[0m[2m:[0m API request failed [3merror_type[0m[2m=[0m"GitServiceError" [3mstatus[0m[2m=[0m500 Internal Server Error [3merror[0m[2m=[0mGitService(Git(Error { code: -3, klass: 2, message: "failed to resolve path '/Users/siphion/dev/1million/1million': No such file or directory" }))
+[2m2026-03-17T14:20:58.759798Z[0m [31mERROR[0m [2mserver::error[0m[2m:[0m API request failed [3merror_type[0m[2m=[0m"GitServiceError" [3mstatus[0m[2m=[0m500 Internal Server Error [3merror[0m[2m=[0mGitService(Git(Error { code: -3, klass: 2, message: "failed to resolve path '/Users/siphion/dev/1million/1million': No such file or directory" }))
+[2m2026-03-17T14:22:06.537454Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Sending SIGINT to process group 68644
+[2m2026-03-17T14:22:06.537994Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Waiting 2s for process group 68644 to exit
+[2m2026-03-17T14:22:06.617507Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Sending SIGINT to process group 68642
+[2m2026-03-17T14:22:06.617555Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Waiting 2s for process group 68642 to exit
+[2m2026-03-17T14:22:06.720915Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Sending SIGINT to process group 68645
+[2m2026-03-17T14:22:06.720958Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Waiting 2s for process group 68645 to exit
+[2m2026-03-17T14:22:06.817829Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Sending SIGINT to process group 68643
+[2m2026-03-17T14:22:06.817867Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Waiting 2s for process group 68643 to exit
+[2m2026-03-17T14:22:08.540024Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Process group 68644 exited after SIGINT
+[2m2026-03-17T14:22:08.619346Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Process group 68642 exited after SIGINT
+[2m2026-03-17T14:22:08.723164Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Process group 68645 exited after SIGINT
+[2m2026-03-17T14:22:08.819184Z[0m [32m INFO[0m [2mutils::process[0m[2m:[0m Process group 68643 exited after SIGINT
+[2m2026-03-17T14:24:45.960654Z[0m [32m INFO[0m [2mserver::routes::sessions[0m[2m:[0m Workspace { id: 5a7a2de1-612b-4bee-9c3c-7777570d2178, task_id: None, container_ref: Some("/var/folders/gc/kslgmnjj6tl9k1_lz9t2h2y80000gn/T/vibe-kanban/worktrees/5a7a-mi-spieghi-perch"), branch: "vk/5a7a-mi-spieghi-perch", setup_completed_at: None, created_at: 2026-03-15T19:36:40.567Z, updated_at: 2026-03-17T14:24:35.894Z, archived: false, pinned: false, name: Some("mi spieghi perche in flash loan calcoliamo i gas fee?"), worktree_deleted: false }

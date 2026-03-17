@@ -1,7 +1,5 @@
 api.vk.siphion.dev {
 	tls /usr/local/etc/letsencrypt/certificates/siphion.dev.crt /usr/local/etc/letsencrypt/certificates/siphion.dev.key
 
-	# No caddy-security auth — the remote server handles its own JWT authentication.
-	# Adding portal auth here would break desktop app API calls (Bearer token flow).
-	reverse_proxy 127.0.0.1:38300
+	respond "hello from api" 200
 }

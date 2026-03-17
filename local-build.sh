@@ -43,8 +43,8 @@ echo "🔍 Detected platform: $PLATFORM"
 echo "🔧 Using target directory: $CARGO_TARGET_DIR"
 
 # Set API base URL for remote features
-export VK_SHARED_API_BASE="https://api.vk.siphion.dev"
-export VITE_VK_SHARED_API_BASE="https://api.vk.siphion.dev"
+export VK_SHARED_API_BASE="https://api.vk.siphion.dev:8443"
+export VITE_VK_SHARED_API_BASE="https://api.vk.siphion.dev:8443"
 
 echo "🧹 Cleaning previous builds..."
 rm -rf npx-cli/dist

@@ -76,6 +76,7 @@
 			allow roles authp/admin authp/user
 			crypto key verify {$JWT_SHARED_KEY}
 		}
+
 	}
 }
 

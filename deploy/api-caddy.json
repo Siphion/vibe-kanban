@@ -1,0 +1,42 @@
+{
+  "admin": {
+    "listen": "localhost:2020"
+  },
+  "apps": {
+    "http": {
+      "servers": {
+        "api": {
+          "listen": [":8443"],
+          "routes": [{
+            "match": [{"host": ["api.vk.siphion.dev"]}],
+            "handle": [{
+              "handler": "subroute",
+              "routes": [{
+                "handle": [{
+                  "handler": "reverse_proxy",
+                  "upstreams": [{"dial": "127.0.0.1:38300"}]
+                }]
+              }]
+            }],
+            "terminal": true
+          }],
+          "tls_connection_policies": [{
+            "match": {"sni": ["api.vk.siphion.dev"]},
+            "certificate_selection": {
+              "any_tag": ["api-vk"]
+            }
+          }]
+        }
+      }
+    },
+    "tls": {
+      "certificates": {
+        "load_files": [{
+          "certificate": "/usr/local/etc/letsencrypt/certificates/siphion.dev.crt",
+          "key": "/usr/local/etc/letsencrypt/certificates/siphion.dev.key",
+          "tags": ["api-vk"]
+        }]
+      }
+    }
+  }
+}

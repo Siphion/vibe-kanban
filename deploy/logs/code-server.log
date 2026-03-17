@@ -1,7 +1,7 @@
-[2026-03-17T12:34:40.573Z] info  code-server 4.108.2 3c0b449c6e6e37b44a8a7938c0d8a3049926a64c
-[2026-03-17T12:34:40.579Z] info  Using user-data-dir /Users/siphion/.local/share/code-server
-[2026-03-17T12:34:40.590Z] info  Using config file /Users/siphion/.config/code-server/config.yaml
-[2026-03-17T12:34:40.590Z] info  HTTP server listening on http://127.0.0.1:38200/
-[2026-03-17T12:34:40.590Z] info    - Authentication is disabled
-[2026-03-17T12:34:40.590Z] info    - Not serving HTTPS
-[2026-03-17T12:34:40.590Z] info  Session server listening on /Users/siphion/.local/share/code-server/code-server-ipc.sock
+[2026-03-17T13:19:14.505Z] info  code-server 4.108.2 3c0b449c6e6e37b44a8a7938c0d8a3049926a64c
+[2026-03-17T13:19:14.512Z] info  Using user-data-dir /Users/siphion/.local/share/code-server
+[2026-03-17T13:19:14.520Z] info  Using config file /Users/siphion/.config/code-server/config.yaml
+[2026-03-17T13:19:14.520Z] info  HTTP server listening on http://127.0.0.1:38200/
+[2026-03-17T13:19:14.520Z] info    - Authentication is disabled
+[2026-03-17T13:19:14.520Z] info    - Not serving HTTPS
+[2026-03-17T13:19:14.520Z] info  Session server listening on /Users/siphion/.local/share/code-server/code-server-ipc.sock

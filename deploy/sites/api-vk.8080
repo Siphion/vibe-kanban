@@ -1,5 +1,5 @@
 @apivk host api.vk.siphion.dev
 
-route @apivk {
+handle @apivk {
 	reverse_proxy 127.0.0.1:38300
 }
