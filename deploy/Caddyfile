@@ -8,15 +8,49 @@
 			path {$HOME}/.local/caddy/users.json
 		}
 
-		authentication portal myportal {
+		authentication portal vk_portal {
 			crypto default token lifetime 86400
 			crypto key sign-verify {$JWT_SHARED_KEY}
 			enable identity store localdb
-			cookie domain {$TS_HOSTNAME}
+			cookie domain vk.siphion.dev
 			cookie lifetime 86400
 			ui {
 				links {
-					"Vibe Kanban" / icon "las la-columns"
+					"Vibe Kanban" https://vk.siphion.dev/ icon "las la-columns"
+				}
+			}
+			transform user {
+				match origin local
+				action add role authp/user
+			}
+		}
+
+		authentication portal code_portal {
+			crypto default token lifetime 86400
+			crypto key sign-verify {$JWT_SHARED_KEY}
+			enable identity store localdb
+			cookie domain code.siphion.dev
+			cookie lifetime 86400
+			ui {
+				links {
+					"Code Server" https://code.siphion.dev/ icon "las la-code"
+				}
+			}
+			transform user {
+				match origin local
+				action add role authp/user
+			}
+		}
+
+		authentication portal 1million_portal {
+			crypto default token lifetime 86400
+			crypto key sign-verify {$JWT_SHARED_KEY}
+			enable identity store localdb
+			cookie domain 1million.siphion.dev
+			cookie lifetime 86400
+			ui {
+				links {
+					"1Million" https://1million.siphion.dev/ icon "las la-chart-line"
 				}
 			}
 			transform user {
@@ -49,7 +83,7 @@ vk.siphion.dev {
 	tls /usr/local/etc/letsencrypt/certificates/siphion.dev.crt /usr/local/etc/letsencrypt/certificates/siphion.dev.key
 
 	route /auth* {
-		authenticate with myportal
+		authenticate with vk_portal
 	}
 
 	# Teams Bot webhook — no auth required (validated by Bot Framework JWT)
@@ -79,7 +113,7 @@ import sites/*.caddy
 
 	route @vk {
 		route /auth* {
-			authenticate with myportal
+			authenticate with vk_portal
 		}
 		route /api/teams/webhook {
 			reverse_proxy 127.0.0.1:38100
@@ -96,7 +130,7 @@ import sites/*.caddy
 
 	route @code {
 		route /auth* {
-			authenticate with myportal
+			authenticate with code_portal
 		}
 		route /* {
 			authorize with codepolicy
@@ -109,7 +143,7 @@ code.siphion.dev {
 	tls /usr/local/etc/letsencrypt/certificates/siphion.dev.crt /usr/local/etc/letsencrypt/certificates/siphion.dev.key
 
 	route /auth* {
-		authenticate with myportal
+		authenticate with code_portal
 	}
 
 	route /* {

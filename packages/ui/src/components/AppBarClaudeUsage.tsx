@@ -1,9 +1,16 @@
 import { GaugeIcon, SpinnerIcon } from '@phosphor-icons/react';
 import { useMemo, useState } from 'react';
-import { cn } from '@/lib/utils';
-import { Popover, PopoverTrigger, PopoverContent } from '../primitives/Popover';
-import { Tooltip } from '../primitives/Tooltip';
-import { useClaudeUsage, type ClaudeStatsCache } from '@/hooks/useClaudeUsage';
+import { cn } from '../lib/cn';
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from './Popover';
+import { Tooltip } from './Tooltip';
+import {
+  useClaudeUsage,
+} from '@/hooks/useClaudeUsage';
+import type { ClaudeStatsCache } from '@/hooks/useClaudeUsage';
 import {
   CLAUDE_PLANS,
   getSelectedPlanId,
@@ -15,6 +22,24 @@ function formatNumber(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return n.toString();
+}
+
+function formatTimeUntil(isoString: string): string {
+  const reset = new Date(isoString).getTime();
+  const now = Date.now();
+  const diffMs = reset - now;
+  if (diffMs <= 0) return 'now';
+  const hours = Math.floor(diffMs / 3_600_000);
+  const mins = Math.floor((diffMs % 3_600_000) / 60_000);
+  if (hours > 0) return `${hours}h ${mins}m`;
+  return `${mins}m`;
+}
+
+function formatTime(isoString: string): string {
+  return new Date(isoString).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 function getToday(): string {
@@ -37,26 +62,15 @@ function useDerivedStats(data: ClaudeStatsCache | null) {
     const [weekStart, weekEnd] = getLast7DaysRange();
 
     const todayActivity = data.dailyActivity.find((d) => d.date === today);
-    const todayTokens = data.dailyModelTokens.find((d) => d.date === today);
 
     const weekActivity = data.dailyActivity.filter(
       (d) => d.date >= weekStart && d.date <= weekEnd
     );
-    const weekTokens = data.dailyModelTokens.filter(
-      (d) => d.date >= weekStart && d.date <= weekEnd
-    );
 
-    const weekMessages = weekActivity.reduce((s, d) => s + d.messageCount, 0);
-    const weekSessions = weekActivity.reduce((s, d) => s + d.sessionCount, 0);
-    const weekToolCalls = weekActivity.reduce((s, d) => s + d.toolCallCount, 0);
-    const weekOutputTokens = weekTokens.reduce(
-      (s, d) => s + Object.values(d.tokensByModel).reduce((a, b) => a + b, 0),
+    const weekSessions = weekActivity.reduce(
+      (s, d) => s + d.sessionCount,
       0
     );
-
-    const todayOutputTokens = todayTokens
-      ? Object.values(todayTokens.tokensByModel).reduce((a, b) => a + b, 0)
-      : 0;
 
     const models = Object.entries(data.modelUsage).map(([name, usage]) => {
       const shortName = name.replace('claude-', '').replace(/-\d{8}$/, '');
@@ -69,16 +83,11 @@ function useDerivedStats(data: ClaudeStatsCache | null) {
 
     return {
       today: {
-        messages: todayActivity?.messageCount ?? 0,
         sessions: todayActivity?.sessionCount ?? 0,
         toolCalls: todayActivity?.toolCallCount ?? 0,
-        outputTokens: todayOutputTokens,
       },
       week: {
-        messages: weekMessages,
         sessions: weekSessions,
-        toolCalls: weekToolCalls,
-        outputTokens: weekOutputTokens,
       },
       totals: {
         sessions: data.totalSessions,
@@ -92,7 +101,11 @@ function useDerivedStats(data: ClaudeStatsCache | null) {
 function ProgressBar({ pct }: { pct: number }) {
   const clamped = Math.min(pct, 100);
   const color =
-    clamped >= 90 ? 'bg-red-500' : clamped >= 70 ? 'bg-amber-500' : 'bg-brand';
+    clamped >= 90
+      ? 'bg-red-500'
+      : clamped >= 70
+        ? 'bg-amber-500'
+        : 'bg-brand';
   return (
     <div className="h-1 w-full rounded-full bg-surface-secondary mt-0.5">
       <div
@@ -107,10 +120,12 @@ function StatRow({
   label,
   value,
   pct,
+  sub,
 }: {
   label: string;
   value: string | number;
   pct?: number;
+  sub?: string;
 }) {
   return (
     <div className="py-0.5">
@@ -123,6 +138,7 @@ function StatRow({
           )}
         </span>
       </div>
+      {sub && <div className="text-[10px] text-low mt-0.5">{sub}</div>}
       {pct != null && <ProgressBar pct={pct} />}
     </div>
   );
@@ -137,7 +153,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function AppBarClaudeUsage() {
-  const { data, isLoading, refresh } = useClaudeUsage();
+  const { data, liveData, isLoading, refresh } = useClaudeUsage();
   const stats = useDerivedStats(data);
   const [planId, setPlanId] = useState(getSelectedPlanId);
   const plan = getPlanById(planId) ?? CLAUDE_PLANS[1];
@@ -148,11 +164,14 @@ export function AppBarClaudeUsage() {
     setSelectedPlanId(id);
   };
 
-  const pctToday = stats
-    ? (stats.today.messages / plan.messagesPerDay) * 100
+  const windowPct = liveData
+    ? (liveData.windowMessages / plan.messagesPer5h) * 100
     : 0;
-  const pctWeek = stats
-    ? (stats.week.messages / (plan.messagesPerDay * 7)) * 100
+  const todayPct = liveData
+    ? (liveData.todayMessages / plan.messagesPerDay) * 100
+    : 0;
+  const weekPct = liveData
+    ? (liveData.weekMessages / (plan.messagesPerDay * 7)) * 100
     : 0;
 
   return (
@@ -203,62 +222,96 @@ export function AppBarClaudeUsage() {
           <div className="flex items-center justify-center py-4">
             <SpinnerIcon className="size-4 animate-spin text-low" />
           </div>
-        ) : !stats ? (
+        ) : !liveData ? (
           <div className="py-4 text-sm text-low text-center">
             No usage data available
           </div>
         ) : (
           <div>
+            {/* 5-hour rolling window */}
+            <SectionLabel>5h window</SectionLabel>
+            <StatRow
+              label="Messages"
+              value={`${liveData.windowMessages.toLocaleString()} / ${plan.messagesPer5h.toLocaleString()}`}
+              pct={windowPct}
+              sub={
+                liveData.windowReset
+                  ? `Resets in ${formatTimeUntil(liveData.windowReset)} (${formatTime(liveData.windowReset)})`
+                  : liveData.windowMessages === 0
+                    ? 'No messages in current window'
+                    : undefined
+              }
+            />
+            <StatRow
+              label="Output tokens"
+              value={formatNumber(liveData.windowOutputTokens)}
+            />
+
+            <div className="mt-1.5 h-px bg-border" />
+
+            {/* Today */}
             <SectionLabel>Today</SectionLabel>
             <StatRow
               label="Messages"
-              value={`${stats.today.messages.toLocaleString()} / ${plan.messagesPerDay.toLocaleString()}`}
-              pct={pctToday}
+              value={`${liveData.todayMessages.toLocaleString()} / ${plan.messagesPerDay.toLocaleString()}`}
+              pct={todayPct}
             />
-            <StatRow label="Sessions" value={stats.today.sessions} />
-            <StatRow
-              label="Tool calls"
-              value={stats.today.toolCalls.toLocaleString()}
-            />
+            {stats && (
+              <>
+                <StatRow label="Sessions" value={stats.today.sessions} />
+                <StatRow
+                  label="Tool calls"
+                  value={stats.today.toolCalls.toLocaleString()}
+                />
+              </>
+            )}
             <StatRow
               label="Output tokens"
-              value={formatNumber(stats.today.outputTokens)}
+              value={formatNumber(liveData.todayOutputTokens)}
             />
 
             <div className="mt-1.5 h-px bg-border" />
 
+            {/* Week */}
             <SectionLabel>Last 7 days</SectionLabel>
             <StatRow
               label="Messages"
-              value={`${stats.week.messages.toLocaleString()} / ${(plan.messagesPerDay * 7).toLocaleString()}`}
-              pct={pctWeek}
+              value={`${liveData.weekMessages.toLocaleString()} / ${(plan.messagesPerDay * 7).toLocaleString()}`}
+              pct={weekPct}
             />
-            <StatRow label="Sessions" value={stats.week.sessions} />
-            <StatRow
-              label="Tool calls"
-              value={stats.week.toolCalls.toLocaleString()}
-            />
-            <StatRow
-              label="Output tokens"
-              value={formatNumber(stats.week.outputTokens)}
-            />
+            {stats && (
+              <StatRow label="Sessions" value={stats.week.sessions} />
+            )}
 
-            <div className="mt-1.5 h-px bg-border" />
-
-            <SectionLabel>All time</SectionLabel>
-            <StatRow
-              label="Sessions"
-              value={stats.totals.sessions.toLocaleString()}
-            />
-            <StatRow
-              label="Messages"
-              value={stats.totals.messages.toLocaleString()}
-            />
-
-            {stats.models.length > 0 && (
+            {/* Active sessions in window */}
+            {liveData.sessions.length > 0 && (
               <>
                 <div className="mt-1.5 h-px bg-border" />
-                <SectionLabel>By model</SectionLabel>
+                <SectionLabel>Sessions in window</SectionLabel>
+                {liveData.sessions.map((s) => {
+                  const project = s.project.split('/').pop() ?? s.project;
+                  return (
+                    <div
+                      key={s.sessionId}
+                      className="py-0.5 text-xs flex items-center justify-between"
+                    >
+                      <span className="text-low truncate mr-2" title={s.project}>
+                        {project}
+                      </span>
+                      <span className="font-medium tabular-nums text-normal whitespace-nowrap">
+                        {s.messages} msg
+                      </span>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+
+            {/* Models */}
+            {stats && stats.models.length > 0 && (
+              <>
+                <div className="mt-1.5 h-px bg-border" />
+                <SectionLabel>By model (all time)</SectionLabel>
                 {stats.models.map((m) => (
                   <div
                     key={m.name}

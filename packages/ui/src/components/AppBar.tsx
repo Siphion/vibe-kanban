@@ -18,7 +18,6 @@ import { cn } from '../lib/cn';
 import { AppBarButton } from './AppBarButton';
 import { AppBarSocialLink } from './AppBarSocialLink';
 import { AppBarClaudeUsage } from './AppBarClaudeUsage';
-import { AppBarActiveTasks } from './AppBarActiveTasks';
 import {
   Popover,
   PopoverTrigger,
@@ -522,7 +521,6 @@ export function AppBar({
     >
       {/* Top section: Custom buttons + Workspaces */}
       <div className="flex flex-col items-center gap-1">
-        <AppBarActiveTasks />
         <AppBarClaudeUsage />
       </div>
 

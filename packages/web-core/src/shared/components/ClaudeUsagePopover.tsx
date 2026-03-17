@@ -14,7 +14,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useClaudeUsage, type ClaudeStatsCache } from '@/hooks/useClaudeUsage';
+import {
+  useClaudeUsage,
+  type ClaudeStatsCache,
+  type LiveUsageData,
+} from '@/hooks/useClaudeUsage';
 import {
   CLAUDE_PLANS,
   getSelectedPlanId,
@@ -28,8 +32,22 @@ function formatNumber(n: number): string {
   return n.toString();
 }
 
-function getToday(): string {
-  return new Date().toISOString().slice(0, 10);
+function formatTimeUntil(isoString: string): string {
+  const reset = new Date(isoString).getTime();
+  const now = Date.now();
+  const diffMs = reset - now;
+  if (diffMs <= 0) return 'now';
+  const hours = Math.floor(diffMs / 3_600_000);
+  const mins = Math.floor((diffMs % 3_600_000) / 60_000);
+  if (hours > 0) return `${hours}h ${mins}m`;
+  return `${mins}m`;
+}
+
+function formatTime(isoString: string): string {
+  return new Date(isoString).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 function getLast7DaysRange(): [string, string] {
@@ -44,30 +62,19 @@ function useDerivedStats(data: ClaudeStatsCache | null) {
   return useMemo(() => {
     if (!data) return null;
 
-    const today = getToday();
+    const today = new Date().toISOString().slice(0, 10);
     const [weekStart, weekEnd] = getLast7DaysRange();
 
     const todayActivity = data.dailyActivity.find((d) => d.date === today);
-    const todayTokens = data.dailyModelTokens.find((d) => d.date === today);
 
     const weekActivity = data.dailyActivity.filter(
       (d) => d.date >= weekStart && d.date <= weekEnd
     );
-    const weekTokens = data.dailyModelTokens.filter(
-      (d) => d.date >= weekStart && d.date <= weekEnd
-    );
 
-    const weekMessages = weekActivity.reduce((s, d) => s + d.messageCount, 0);
-    const weekSessions = weekActivity.reduce((s, d) => s + d.sessionCount, 0);
-    const weekToolCalls = weekActivity.reduce((s, d) => s + d.toolCallCount, 0);
-    const weekOutputTokens = weekTokens.reduce(
-      (s, d) => s + Object.values(d.tokensByModel).reduce((a, b) => a + b, 0),
+    const weekSessions = weekActivity.reduce(
+      (s, d) => s + d.sessionCount,
       0
     );
-
-    const todayOutputTokens = todayTokens
-      ? Object.values(todayTokens.tokensByModel).reduce((a, b) => a + b, 0)
-      : 0;
 
     const models = Object.entries(data.modelUsage).map(([name, usage]) => {
       const shortName = name.replace('claude-', '').replace(/-\d{8}$/, '');
@@ -80,17 +87,10 @@ function useDerivedStats(data: ClaudeStatsCache | null) {
 
     return {
       today: {
-        messages: todayActivity?.messageCount ?? 0,
         sessions: todayActivity?.sessionCount ?? 0,
         toolCalls: todayActivity?.toolCallCount ?? 0,
-        outputTokens: todayOutputTokens,
       },
-      week: {
-        messages: weekMessages,
-        sessions: weekSessions,
-        toolCalls: weekToolCalls,
-        outputTokens: weekOutputTokens,
-      },
+      week: { sessions: weekSessions },
       totals: {
         sessions: data.totalSessions,
         messages: data.totalMessages,
@@ -104,10 +104,12 @@ function StatRow({
   label,
   value,
   pct,
+  sub,
 }: {
   label: string;
   value: string | number;
   pct?: number;
+  sub?: string;
 }) {
   return (
     <div className="px-2 py-0.5">
@@ -122,6 +124,11 @@ function StatRow({
           )}
         </span>
       </div>
+      {sub && (
+        <div className="px-0 text-[10px] text-muted-foreground mt-0.5">
+          {sub}
+        </div>
+      )}
       {pct != null && (
         <div className="h-1 w-full rounded-full bg-muted mt-0.5">
           <div
@@ -141,7 +148,7 @@ function StatRow({
 }
 
 export function ClaudeUsagePopover() {
-  const { data, isLoading, refresh } = useClaudeUsage();
+  const { data, liveData, isLoading, refresh } = useClaudeUsage();
   const stats = useDerivedStats(data);
   const [planId, setPlanId] = useState(getSelectedPlanId);
   const plan = getPlanById(planId) ?? CLAUDE_PLANS[1];
@@ -152,11 +159,14 @@ export function ClaudeUsagePopover() {
     setSelectedPlanId(id);
   };
 
-  const pctToday = stats
-    ? (stats.today.messages / plan.messagesPerDay) * 100
+  const windowPct = liveData
+    ? (liveData.windowMessages / plan.messagesPer5h) * 100
     : 0;
-  const pctWeek = stats
-    ? (stats.week.messages / (plan.messagesPerDay * 7)) * 100
+  const todayPct = liveData
+    ? (liveData.todayMessages / plan.messagesPerDay) * 100
+    : 0;
+  const weekPct = liveData
+    ? (liveData.weekMessages / (plan.messagesPerDay * 7)) * 100
     : 0;
 
   return (
@@ -205,69 +215,108 @@ export function ClaudeUsagePopover() {
           <div className="flex items-center justify-center py-4">
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           </div>
-        ) : !stats ? (
+        ) : !liveData ? (
           <div className="px-2 py-4 text-sm text-muted-foreground text-center">
             No usage data available
           </div>
         ) : (
           <div className="py-1">
+            {/* 5-hour rolling window */}
+            <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              5h window
+            </DropdownMenuLabel>
+            <StatRow
+              label="Messages"
+              value={`${liveData.windowMessages.toLocaleString()} / ${plan.messagesPer5h.toLocaleString()}`}
+              pct={windowPct}
+              sub={
+                liveData.windowReset
+                  ? `Resets in ${formatTimeUntil(liveData.windowReset)} (${formatTime(liveData.windowReset)})`
+                  : liveData.windowMessages === 0
+                    ? 'No messages in current window'
+                    : undefined
+              }
+            />
+            <StatRow
+              label="Output tokens"
+              value={formatNumber(liveData.windowOutputTokens)}
+            />
+
+            <DropdownMenuSeparator />
+
+            {/* Today */}
             <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Today
             </DropdownMenuLabel>
             <StatRow
               label="Messages"
-              value={`${stats.today.messages.toLocaleString()} / ${plan.messagesPerDay.toLocaleString()}`}
-              pct={pctToday}
+              value={`${liveData.todayMessages.toLocaleString()} / ${plan.messagesPerDay.toLocaleString()}`}
+              pct={todayPct}
             />
-            <StatRow label="Sessions" value={stats.today.sessions} />
-            <StatRow
-              label="Tool calls"
-              value={stats.today.toolCalls.toLocaleString()}
-            />
+            {stats && (
+              <>
+                <StatRow label="Sessions" value={stats.today.sessions} />
+                <StatRow
+                  label="Tool calls"
+                  value={stats.today.toolCalls.toLocaleString()}
+                />
+              </>
+            )}
             <StatRow
               label="Output tokens"
-              value={formatNumber(stats.today.outputTokens)}
+              value={formatNumber(liveData.todayOutputTokens)}
             />
 
             <DropdownMenuSeparator />
 
+            {/* Week */}
             <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Last 7 days
             </DropdownMenuLabel>
             <StatRow
               label="Messages"
-              value={`${stats.week.messages.toLocaleString()} / ${(plan.messagesPerDay * 7).toLocaleString()}`}
-              pct={pctWeek}
+              value={`${liveData.weekMessages.toLocaleString()} / ${(plan.messagesPerDay * 7).toLocaleString()}`}
+              pct={weekPct}
             />
-            <StatRow label="Sessions" value={stats.week.sessions} />
-            <StatRow
-              label="Tool calls"
-              value={stats.week.toolCalls.toLocaleString()}
-            />
-            <StatRow
-              label="Output tokens"
-              value={formatNumber(stats.week.outputTokens)}
-            />
+            {stats && (
+              <StatRow label="Sessions" value={stats.week.sessions} />
+            )}
 
-            <DropdownMenuSeparator />
-
-            <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              All time
-            </DropdownMenuLabel>
-            <StatRow
-              label="Sessions"
-              value={stats.totals.sessions.toLocaleString()}
-            />
-            <StatRow
-              label="Messages"
-              value={stats.totals.messages.toLocaleString()}
-            />
-
-            {stats.models.length > 0 && (
+            {/* Active sessions in window */}
+            {liveData.sessions.length > 0 && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  By model
+                  Sessions in window
+                </DropdownMenuLabel>
+                {liveData.sessions.map((s) => {
+                  const project = s.project.split('/').pop() ?? s.project;
+                  return (
+                    <div
+                      key={s.sessionId}
+                      className="px-2 py-0.5 text-xs flex items-center justify-between"
+                    >
+                      <span
+                        className="text-muted-foreground truncate mr-2"
+                        title={s.project}
+                      >
+                        {project}
+                      </span>
+                      <span className="font-medium tabular-nums whitespace-nowrap">
+                        {s.messages} msg
+                      </span>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+
+            {/* Models */}
+            {stats && stats.models.length > 0 && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  By model (all time)
                 </DropdownMenuLabel>
                 {stats.models.map((m) => (
                   <div

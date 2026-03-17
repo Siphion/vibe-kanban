@@ -1,4 +1,4 @@
-use std::{path::PathBuf, time::Duration};
+use std::time::Duration;
 
 use axum::{
     Json, Router,
@@ -689,6 +689,7 @@ async fn process_message(
                                         pool,
                                         &CreateSession {
                                             executor: Some(format!("custom-cmd-{}", cmd.name)),
+                                            name: None,
                                         },
                                         Uuid::new_v4(),
                                         ws.id,
@@ -932,6 +933,7 @@ async fn process_message(
                                         pool,
                                         &CreateSession {
                                             executor: Some(format!("custom-cmd-{}", cmd.name)),
+                                            name: None,
                                         },
                                         Uuid::new_v4(),
                                         ws.id,
@@ -1189,36 +1191,19 @@ async fn create_workspace_from_teams(
         .git_branch_from_workspace(&workspace_id, &branch_label)
         .await;
 
-    // Determine agent_working_dir
-    let agent_working_dir = if channel_repos.len() == 1 {
-        if let Some(repo) = Repo::find_by_id(pool, channel_repos[0].repo_id).await? {
-            match repo.default_working_dir {
-                Some(subdir) => {
-                    let path = PathBuf::from(&repo.name).join(&subdir);
-                    Some(path.to_string_lossy().to_string())
-                }
-                None => Some(repo.name.clone()),
-            }
-        } else {
-            None
-        }
-    } else {
-        None
-    };
-
+    let ws_name = truncate_for_name(prompt);
     let workspace = Workspace::create(
         pool,
         &CreateWorkspace {
             branch: git_branch_name,
-            agent_working_dir,
+            name: Some(ws_name.clone()),
         },
         workspace_id,
     )
     .await
     .map_err(|e| TeamsError::HttpError(format!("workspace creation failed: {}", e)))?;
 
-    // Set workspace name
-    let ws_name = truncate_for_name(prompt);
+    // Update workspace name
     Workspace::update(pool, workspace.id, None, None, Some(&ws_name))
         .await
         .map_err(|e| TeamsError::Database(e.into()))?;

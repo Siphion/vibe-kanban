@@ -2,7 +2,7 @@
 
 route @1million {
 	route /auth* {
-		authenticate with myportal
+		authenticate with 1million_portal
 	}
 	route /api/* {
 		authorize with 1million_policy

@@ -2,7 +2,7 @@
 	tls /usr/local/etc/letsencrypt/certificates/siphion.dev.crt /usr/local/etc/letsencrypt/certificates/siphion.dev.key
 
 	route /auth* {
-		authenticate with myportal
+		authenticate with 1million_portal
 	}
 
 	# Backend API & health — proxy to backend container

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { handleApiResponse } from '@/lib/api';
+import { handleApiResponse } from '@/shared/lib/api';
 
 export interface DailyActivity {
   date: string;
@@ -32,16 +32,41 @@ export interface ClaudeStatsCache {
   hourCounts: Record<string, number>;
 }
 
+export interface LiveSessionUsage {
+  sessionId: string;
+  project: string;
+  startedAt: string;
+  messages: number;
+  outputTokens: number;
+}
+
+export interface LiveUsageData {
+  windowMessages: number;
+  windowStart: string | null;
+  windowReset: string | null;
+  sessions: LiveSessionUsage[];
+  todayMessages: number;
+  weekMessages: number;
+  windowOutputTokens: number;
+  todayOutputTokens: number;
+}
+
 export function useClaudeUsage() {
   const [data, setData] = useState<ClaudeStatsCache | null>(null);
+  const [liveData, setLiveData] = useState<LiveUsageData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/claude-usage');
-      const result = await handleApiResponse<ClaudeStatsCache>(response);
-      setData(result);
+      const [statsRes, liveRes] = await Promise.all([
+        fetch('/api/claude-usage'),
+        fetch('/api/claude-usage/live'),
+      ]);
+      const stats = await handleApiResponse<ClaudeStatsCache>(statsRes);
+      const live = await handleApiResponse<LiveUsageData>(liveRes);
+      setData(stats);
+      setLiveData(live);
     } catch (err) {
       console.error('Failed to fetch Claude usage:', err);
     } finally {
@@ -49,5 +74,5 @@ export function useClaudeUsage() {
     }
   }, []);
 
-  return { data, isLoading, refresh };
+  return { data, liveData, isLoading, refresh };
 }
