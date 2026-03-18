@@ -32,23 +32,24 @@ export interface ClaudeStatsCache {
   hourCounts: Record<string, number>;
 }
 
-export interface LiveSessionUsage {
-  sessionId: string;
-  project: string;
-  startedAt: string;
-  messages: number;
-  outputTokens: number;
+export interface UsageWindow {
+  utilization: number;
+  resetsAt: string;
+}
+
+export interface ExtraUsage {
+  isEnabled: boolean;
+  monthlyLimit: number;
+  usedCredits: number;
+  utilization: number;
 }
 
 export interface LiveUsageData {
-  windowMessages: number;
-  windowStart: string | null;
-  windowReset: string | null;
-  sessions: LiveSessionUsage[];
-  todayMessages: number;
-  weekMessages: number;
-  windowOutputTokens: number;
-  todayOutputTokens: number;
+  fiveHour: UsageWindow | null;
+  sevenDay: UsageWindow | null;
+  sevenDayOpus: UsageWindow | null;
+  sevenDaySonnet: UsageWindow | null;
+  extraUsage: ExtraUsage | null;
 }
 
 export function useClaudeUsage() {
@@ -64,9 +65,14 @@ export function useClaudeUsage() {
         fetch('/api/claude-usage/live'),
       ]);
       const stats = await handleApiResponse<ClaudeStatsCache>(statsRes);
-      const live = await handleApiResponse<LiveUsageData>(liveRes);
       setData(stats);
-      setLiveData(live);
+      try {
+        const live = await handleApiResponse<LiveUsageData>(liveRes);
+        setLiveData(live);
+      } catch {
+        // Live data may fail (no keychain, no OAuth) — non-blocking
+        setLiveData(null);
+      }
     } catch (err) {
       console.error('Failed to fetch Claude usage:', err);
     } finally {
