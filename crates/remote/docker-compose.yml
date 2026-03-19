@@ -5,6 +5,7 @@ services:
   remote-db:
     image: postgres:16-alpine
     command: [ "postgres", "-c", "wal_level=logical" ]
+    restart: unless-stopped
     environment:
       POSTGRES_DB: remote
       POSTGRES_USER: remote
@@ -24,6 +25,7 @@ services:
     profiles: ["attachments"]
     image: mcr.microsoft.com/azure-storage/azurite:latest
     command: "azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --loose --skipApiVersionCheck"
+    restart: unless-stopped
     ports:
       - "10000:10000"
     volumes:
@@ -53,7 +55,7 @@ services:
   electric:
     image: electricsql/electric:1.4.13
     working_dir: /app
-    restart: on-failure
+    restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://electric_sync:${ELECTRIC_ROLE_PASSWORD:-remote}@remote-db:5432/remote?sslmode=disable
       PG_PROXY_PORT: 65432

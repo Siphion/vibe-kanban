@@ -106,40 +106,6 @@ vk.siphion.dev {
 
 import sites/*.caddy
 
-:8080 {
-	import sites/*.8080
-
-	@vk host vk.siphion.dev
-	@code host code.siphion.dev
-
-	route @vk {
-		route /auth* {
-			authenticate with vk_portal
-		}
-		route /api/teams/webhook {
-			reverse_proxy 127.0.0.1:38100
-		}
-		route /_vk_preview/* {
-			authorize with mypolicy
-			reverse_proxy 127.0.0.1:{$PREVIEW_PROXY_PORT:38101}
-		}
-		route /* {
-			authorize with mypolicy
-			reverse_proxy 127.0.0.1:38100
-		}
-	}
-
-	route @code {
-		route /auth* {
-			authenticate with code_portal
-		}
-		route /* {
-			authorize with codepolicy
-			reverse_proxy 127.0.0.1:38200
-		}
-	}
-}
-
 code.siphion.dev {
 	tls /usr/local/etc/letsencrypt/certificates/siphion.dev.crt /usr/local/etc/letsencrypt/certificates/siphion.dev.key
 

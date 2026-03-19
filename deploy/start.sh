@@ -107,10 +107,24 @@ else
     echo "[OK] Caddy started"
 fi
 
+# --- Caddy API proxy (TLS on :8443 for vk-remote-server) ---
+API_CADDY_CONFIG="$BASE_DIR/api-caddy.json"
+if [ -f "$API_CADDY_CONFIG" ]; then
+    if lsof -i :8443 > /dev/null 2>&1; then
+        echo "[OK] Caddy API proxy already running on :8443"
+    else
+        echo "[*] Starting Caddy API proxy on :8443..."
+        HOME="/Users/$REAL_USER" "$CADDY_BIN" start --config "$API_CADDY_CONFIG"
+        echo "[OK] Caddy API proxy started"
+    fi
+fi
+
 echo ""
 echo "=== Running (siphion.dev) ==="
 echo "Vibe Kanban (mod) : http://127.0.0.1:38100 (local only)"
 echo "code-server       : http://127.0.0.1:38200 (local only)"
+echo "vk-remote-server  : http://127.0.0.1:38300 (local only)"
 echo "Caddy (TLS+auth)  : https://$TS_HOSTNAME     (tailnet)"
+echo "Caddy API proxy   : https://api.vk.siphion.dev:8443 (tailnet)"
 echo "code-server (web) : https://code.siphion.dev  (tailnet)"
 echo "Logs              : $LOGS_DIR/"
