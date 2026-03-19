@@ -1,5 +1,6 @@
 # Self-hosting: set PUBLIC_BASE_URL to your public URL (e.g. https://kanban.example.com)
 # and REMOTE_SERVER_PORTS=0.0.0.0:3000:8081 so the server is reachable from other hosts.
+name: vk-remote
 services:
   remote-db:
     image: postgres:16-alpine
