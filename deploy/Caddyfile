@@ -59,6 +59,23 @@
 			}
 		}
 
+		authentication portal autobook_portal {
+			crypto default token lifetime 86400
+			crypto key sign-verify {$JWT_SHARED_KEY}
+			enable identity store localdb
+			cookie domain autobook.siphion.dev
+			cookie lifetime 86400
+			ui {
+				links {
+					"AutoBook" https://autobook.siphion.dev/ icon "las la-book"
+				}
+			}
+			transform user {
+				match origin local
+				action add role authp/user
+			}
+		}
+
 		authorization policy mypolicy {
 			set auth url https://{$TS_HOSTNAME}/auth/
 			allow roles authp/admin authp/user
@@ -73,6 +90,12 @@
 
 		authorization policy 1million_policy {
 			set auth url https://1million.siphion.dev/auth/
+			allow roles authp/admin authp/user
+			crypto key verify {$JWT_SHARED_KEY}
+		}
+
+		authorization policy autobook_policy {
+			set auth url https://autobook.siphion.dev/auth/
 			allow roles authp/admin authp/user
 			crypto key verify {$JWT_SHARED_KEY}
 		}

@@ -96,9 +96,26 @@ else
     fi
 fi
 
+# --- AutoBook (Docker Compose) --- runs as real user
+AUTOBOOK_DIR="/Users/$REAL_USER/dev/autobook"
+if [ -d "$AUTOBOOK_DIR" ]; then
+    if sudo -u "$REAL_USER" docker compose -f "$AUTOBOOK_DIR/docker-compose.yml" ps --status running 2>/dev/null | grep -q "web"; then
+        echo "[OK] AutoBook already running on 127.0.0.1:8003"
+    else
+        echo "[*] Starting AutoBook (Docker) on 127.0.0.1:8003..."
+        if sudo -u "$REAL_USER" docker compose -f "$AUTOBOOK_DIR/docker-compose.yml" up -d --build; then
+            echo "[OK] AutoBook started"
+        else
+            echo "[!] WARNING: AutoBook failed to start, continuing..."
+        fi
+    fi
+else
+    echo "[--] AutoBook directory not found at $AUTOBOOK_DIR, skipping"
+fi
+
 # --- Caddy (custom build with caddy-security, TLS + auth on :443) ---
-if pgrep -f "$CADDY_BIN" > /dev/null 2>&1; then
-    echo "[*] Caddy already running, reloading config..."
+if nc -z 127.0.0.1 443 2>/dev/null; then
+    echo "[*] Caddy already listening on :443, reloading config..."
     "$CADDY_BIN" reload --config "$BASE_DIR/Caddyfile" --force 2>/dev/null
     echo "[OK] Caddy config reloaded"
 else
@@ -110,7 +127,7 @@ fi
 # --- Caddy API proxy (TLS on :8443 for vk-remote-server) ---
 API_CADDY_CONFIG="$BASE_DIR/api-caddy.json"
 if [ -f "$API_CADDY_CONFIG" ]; then
-    if lsof -i :8443 > /dev/null 2>&1; then
+    if nc -z 127.0.0.1 8443 2>/dev/null; then
         echo "[OK] Caddy API proxy already running on :8443"
     else
         echo "[*] Starting Caddy API proxy on :8443..."
@@ -124,7 +141,9 @@ echo "=== Running (siphion.dev) ==="
 echo "Vibe Kanban (mod) : http://127.0.0.1:38100 (local only)"
 echo "code-server       : http://127.0.0.1:38200 (local only)"
 echo "vk-remote-server  : http://127.0.0.1:38300 (local only)"
+echo "AutoBook          : http://127.0.0.1:8003  (local only)"
 echo "Caddy (TLS+auth)  : https://$TS_HOSTNAME     (tailnet)"
 echo "Caddy API proxy   : https://api.vk.siphion.dev:8443 (tailnet)"
 echo "code-server (web) : https://code.siphion.dev  (tailnet)"
+echo "AutoBook (web)    : https://autobook.siphion.dev (tailnet)"
 echo "Logs              : $LOGS_DIR/"

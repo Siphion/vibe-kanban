@@ -1,0 +1,12 @@
+autobook.siphion.dev {
+	tls /usr/local/etc/letsencrypt/certificates/siphion.dev.crt /usr/local/etc/letsencrypt/certificates/siphion.dev.key
+
+	route /auth* {
+		authenticate with autobook_portal
+	}
+
+	route /* {
+		authorize with autobook_policy
+		reverse_proxy 127.0.0.1:8003
+	}
+}

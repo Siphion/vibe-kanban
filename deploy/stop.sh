@@ -27,3 +27,14 @@ if pgrep -f "code-server" > /dev/null 2>&1; then
 else
     echo "[--] code-server not running"
 fi
+
+# --- AutoBook (Docker Compose) ---
+REAL_USER="${SUDO_USER:-$USER}"
+AUTOBOOK_DIR="/Users/$REAL_USER/dev/autobook"
+if [ -d "$AUTOBOOK_DIR" ]; then
+    if docker compose -f "$AUTOBOOK_DIR/docker-compose.yml" ps --status running 2>/dev/null | grep -q "web"; then
+        docker compose -f "$AUTOBOOK_DIR/docker-compose.yml" down && echo "[OK] AutoBook stopped" || echo "[!] WARNING: AutoBook stop failed"
+    else
+        echo "[--] AutoBook not running"
+    fi
+fi
